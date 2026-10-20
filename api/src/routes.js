@@ -6,6 +6,7 @@ import mesasRoutes from './modules/mesas/mesas.routes.js';
 import insumosRoutes from './modules/insumos/insumos.routes.js';
 import productosRoutes from './modules/productos/productos.routes.js';
 import pedidosRoutes from './modules/pedidos/pedidos.routes.js';
+import reportesRoutes from './modules/reportes/reportes.routes.js';
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use('/mesas', mesasRoutes);
 router.use('/insumos', insumosRoutes);
 router.use('/productos', productosRoutes);
 router.use('/pedidos', pedidosRoutes);
+router.use('/reportes', reportesRoutes);
 
 export default router;

@@ -1,10 +1,8 @@
 import { z } from 'zod';
-import { bool } from '../../utils/schemas.js';
+import { bool, fecha } from '../../utils/schemas.js';
 
 const id = z.number().int().positive();
 const numComensales = z.number().int().min(1).max(50);
-const fecha = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Usa el formato AAAA-MM-DD')
-  .refine((d) => !Number.isNaN(Date.parse(d)), 'Fecha inválida');
 
 const item = z.object({
   producto_id: id,

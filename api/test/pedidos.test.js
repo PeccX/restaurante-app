@@ -189,6 +189,7 @@ test('filtros del listado y fechas inválidas', async () => {
   assert.ok(c.data.some((p) => p.id === pedidoId));
   assert.ok(c.data.every((p) => p.estado === 'cancelado' && p.mesa_id === mesaId));
   assert.equal((await call('GET', '/pedidos?desde=ayer', { token: admin })).status, 400);
+  assert.equal((await call('GET', '/pedidos?desde=2026-02-31', { token: admin })).status, 400, 'fecha que no existe');
   assert.equal((await call('GET', '/pedidos?desde=2026-10-20&hasta=2026-10-01', { token: admin })).status, 400);
   const hoy = new Date().toISOString().slice(0, 10);
   assert.equal((await call('GET', `/pedidos?desde=${hoy}&hasta=2099-01-01`, { token: admin })).status, 200);
