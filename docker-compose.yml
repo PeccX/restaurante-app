@@ -1,0 +1,42 @@
+services:
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: restaurante
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db_data:/var/lib/mysql                       
+      - ./db/init:/docker-entrypoint-initdb.d:ro     
+    ports:
+      - "127.0.0.1:3307:3306"                       
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build: ./api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy                   # la API arranca cuando la BD ya responde
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: db                                    # nombre del servicio
+      DB_PORT: 3306
+      DB_NAME: restaurante
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+    ports:
+      - "80:3000"                                    # HTTP público en la EC2
+
+volumes:
+  db_data:
