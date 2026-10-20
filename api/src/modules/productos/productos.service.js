@@ -43,7 +43,6 @@ export const update = async (id, { receta, activo, ...data }) => {
   return get(id);
 };
 
-// "Eliminar" = desactivar: los pedidos históricos siguen apuntando al producto
 export const remove = async (id) => {
   await get(id);
   await withTransaction((run) => repo.update(id, { activo: 0 }, run));

@@ -1,7 +1,5 @@
 -- ============================================================
 -- PARTE 2: Pedidos, ítems (con comensal) y movimientos de inventario
--- Requiere haber corrido la parte 1. Motor: MariaDB 10.5+.
--- Si vuelves a correr 01_catalogos.sql, corre este archivo de nuevo después.
 -- ============================================================
 USE restaurante;
 
@@ -20,14 +18,22 @@ CREATE TABLE pedidos (
   notas           VARCHAR(255) NULL,
   creado_en       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   actualizado_en  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  pagado_en       TIMESTAMP NULL DEFAULT NULL,               -- la mesa se libera al pagar, no al entregar
+  metodo_pago     VARCHAR(20) NULL,
+  pagado_por      INT NULL,                                  -- quién cobró
   CONSTRAINT fk_pedidos_mesa    FOREIGN KEY (mesa_id)    REFERENCES mesas(id)    ON DELETE RESTRICT,
   CONSTRAINT fk_pedidos_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_pedidos_pagado_por FOREIGN KEY (pagado_por) REFERENCES usuarios(id) ON DELETE RESTRICT,
   CONSTRAINT chk_pedidos_comensales CHECK (num_comensales >= 1),
   CONSTRAINT chk_pedidos_estado     CHECK (estado IN ('pendiente', 'en_preparacion', 'entregado', 'cancelado')),
   CONSTRAINT chk_pedidos_total      CHECK (total >= 0),
+  CONSTRAINT chk_pedidos_pago       CHECK (
+    (pagado_en IS NULL AND metodo_pago IS NULL AND pagado_por IS NULL)
+    OR (pagado_en IS NOT NULL AND metodo_pago IN ('efectivo', 'tarjeta', 'transferencia') AND estado = 'entregado')),
   INDEX idx_pedidos_estado (estado),
   INDEX idx_pedidos_mesa   (mesa_id),
-  INDEX idx_pedidos_fecha  (creado_en)
+  INDEX idx_pedidos_fecha  (creado_en),
+  INDEX idx_pedidos_pagado (pagado_en)
 ) ENGINE=InnoDB;
 
 -- ---------- PEDIDO_ITEMS (detalle) ----------
@@ -37,7 +43,7 @@ CREATE TABLE pedido_items (
   pedido_id        INT NOT NULL,
   producto_id      INT NOT NULL,
   cantidad         INT NOT NULL,
-  precio_unitario  DECIMAL(10,2) NOT NULL,                   -- precio al momento de vender (no cambia si el producto sube)
+  precio_unitario  DECIMAL(10,2) NOT NULL,                   
   comensal         SMALLINT NULL,
   CONSTRAINT fk_items_pedido   FOREIGN KEY (pedido_id)   REFERENCES pedidos(id)   ON DELETE CASCADE,
   CONSTRAINT fk_items_producto FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE RESTRICT,
@@ -48,7 +54,7 @@ CREATE TABLE pedido_items (
   INDEX idx_items_producto (producto_id)
 ) ENGINE=InnoDB;
 
--- El comensal no puede ser mayor que num_comensales del pedido (regla entre tablas => trigger)
+-- El comensal no puede ser mayor que num_comensales del pedido
 DROP TRIGGER IF EXISTS trg_items_comensal_ins;
 DROP TRIGGER IF EXISTS trg_items_comensal_upd;
 DELIMITER $$
@@ -70,7 +76,7 @@ BEGIN
 END$$
 DELIMITER ;
 
--- ---------- MOVIMIENTOS_INVENTARIO (historial de todo cambio de stock) ----------
+-- ---------- MOVIMIENTOS_INVENTARIO ----------
 -- cantidad con signo: negativo = sale stock (consumo), positivo = entra (devolución / ajuste +)
 CREATE TABLE movimientos_inventario (
   id                INT AUTO_INCREMENT PRIMARY KEY,

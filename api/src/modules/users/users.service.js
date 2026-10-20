@@ -30,7 +30,7 @@ export const update = async (id, data, actor) => {
   return get(id);
 };
 
-// "Eliminar" = desactivar (borrado lógico), para no romper pedidos que referencian al usuario
+// Borrado lógico: los pedidos referencian al usuario
 export const remove = async (id, actor) => {
   if (id === actor.id) throw new AppError(400, 'No puedes eliminar tu propio usuario');
   await get(id);

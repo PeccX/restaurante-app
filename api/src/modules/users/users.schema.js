@@ -1,10 +1,11 @@
 import { z } from 'zod';
+import { nombreTexto } from '../../utils/schemas.js';
 
 const id = z.coerce.number().int().positive();
-const nombre = z.string().trim().min(2).max(100);
+const nombre = nombreTexto;
 const email = z.string().trim().toLowerCase().email().max(150);
 const password = z.string()
-  .min(8, 'Mínimo 8 caracteres').max(72, 'Máximo 72 caracteres')   // 72 = límite de bcrypt
+  .min(8, 'Mínimo 8 caracteres').max(72, 'Máximo 72 caracteres')   // límite de bcrypt
   .regex(/[A-Za-z]/, 'Debe incluir al menos una letra')
   .regex(/\d/, 'Debe incluir al menos un número');
 const rol = z.enum(['admin', 'mesero', 'cocina']);

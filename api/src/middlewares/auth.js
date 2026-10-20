@@ -12,7 +12,7 @@ export const authenticate = async (req, _res, next) => {
   } catch {
     throw new AppError(401, 'Token inválido o expirado');
   }
-  const user = await usersRepo.findById(payload.sub);       // si lo desactivan, pierde acceso de inmediato
+  const user = await usersRepo.findById(payload.sub);       // si lo desactivan, pierde acceso aunque el token siga vigente
   if (!user || !user.activo) throw new AppError(401, 'Usuario no válido');
   req.user = user;
   next();

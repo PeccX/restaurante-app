@@ -5,6 +5,7 @@ import usersRoutes from './modules/users/users.routes.js';
 import mesasRoutes from './modules/mesas/mesas.routes.js';
 import insumosRoutes from './modules/insumos/insumos.routes.js';
 import productosRoutes from './modules/productos/productos.routes.js';
+import pedidosRoutes from './modules/pedidos/pedidos.routes.js';
 
 const router = Router();
 
@@ -18,6 +19,6 @@ router.use('/users', usersRoutes);
 router.use('/mesas', mesasRoutes);
 router.use('/insumos', insumosRoutes);
 router.use('/productos', productosRoutes);
-// Aquí se irán montando: /pedidos, /reportes
+router.use('/pedidos', pedidosRoutes);
 
 export default router;

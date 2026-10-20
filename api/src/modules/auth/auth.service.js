@@ -4,7 +4,7 @@ import { env } from '../../config/env.js';
 import { AppError } from '../../utils/AppError.js';
 import * as usersRepo from '../users/users.repository.js';
 
-const DUMMY_HASH = bcrypt.hashSync('no-existe', 10);   // para tardar igual aunque el correo no exista
+const DUMMY_HASH = bcrypt.hashSync('no-existe', 10);   // para no revelar por el tiempo de respuesta si el correo existe
 
 export const login = async ({ email, password }) => {
   const user = await usersRepo.findByEmail(email);

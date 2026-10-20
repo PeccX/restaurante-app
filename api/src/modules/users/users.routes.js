@@ -5,7 +5,7 @@ import * as ctrl from './users.controller.js';
 import { idParams, listQuery, createBody, updateBody } from './users.schema.js';
 
 const router = Router();
-router.use(authenticate, requireRole('admin'));        // todo el CRUD es solo para administradores
+router.use(authenticate, requireRole('admin'));
 
 router.get('/', validate({ query: listQuery }), ctrl.list);
 router.get('/:id', validate({ params: idParams }), ctrl.get);

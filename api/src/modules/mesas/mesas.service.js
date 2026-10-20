@@ -18,12 +18,15 @@ export const update = async (id, data) => {
   const mesa = await get(id);
   if (data.numero !== undefined) await assertNumeroFree(data.numero, id);
   if (data.activo === false && mesa.estado === 'ocupada') throw new AppError(409, 'La mesa está ocupada');
+  if (data.estado === 'libre') {
+    const n = await repo.cuentasPendientes(id);
+    if (n) throw new AppError(409, `La mesa tiene ${n} cuenta(s) sin pagar; se libera al cobrar o cancelar`);
+  }
   const { activo, ...rest } = data;
   await repo.update(id, { ...rest, ...(activo !== undefined && { activo: activo ? 1 : 0 }) });
   return get(id);
 };
 
-// "Eliminar" = desactivar (los pedidos históricos la referencian)
 export const remove = async (id) => {
   const mesa = await get(id);
   if (mesa.estado === 'ocupada') throw new AppError(409, 'La mesa está ocupada');

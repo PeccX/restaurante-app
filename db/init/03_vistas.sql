@@ -1,8 +1,6 @@
 -- ============================================================
--- PARTE 3a: Vistas para reportes y pantallas. Requiere partes 1 y 2.
--- Criterio de "venta": pedido en estado 'entregado' (si prefieres contar también
--- 'pendiente' y 'en_preparacion', cambia el WHERE de las dos vistas de ventas).
--- Motor: MariaDB 10.5+ (usa CTE recursivo y funciones de ventana).
+-- PARTE 3a: Vistas para reportes y pantallas.
+-- Venta = pedido entregado y pagado; se cuenta en la fecha del pago.
 -- ============================================================
 USE restaurante;
 
@@ -12,22 +10,21 @@ ALTER TABLE pedidos ADD INDEX idx_pedidos_estado_fecha (estado, creado_en);
 
 -- ---------- Ventas por día (Excel: hoja de ventas) ----------
 CREATE OR REPLACE VIEW v_ventas_diarias AS
-SELECT DATE(creado_en)   AS fecha,
-       COUNT(*)          AS num_pedidos,
-       SUM(num_comensales) AS comensales,
-       SUM(total)        AS total_ventas
+SELECT DATE(pagado_en)      AS fecha,
+       COUNT(*)             AS num_pedidos,
+       SUM(num_comensales)  AS comensales,
+       SUM(total)           AS total_ventas
 FROM pedidos
-WHERE estado = 'entregado'
-GROUP BY DATE(creado_en);
+WHERE estado = 'entregado' AND pagado_en IS NOT NULL
+GROUP BY DATE(pagado_en);
 
 -- ---------- Productos más vendidos (Excel: hoja de ranking) ----------
--- Úsala así: SELECT * FROM v_productos_mas_vendidos ORDER BY unidades_vendidas DESC;
 CREATE OR REPLACE VIEW v_productos_mas_vendidos AS
 SELECT p.id AS producto_id, p.nombre AS producto, p.categoria,
        SUM(i.cantidad)                      AS unidades_vendidas,
        SUM(i.cantidad * i.precio_unitario)  AS ingresos
 FROM pedido_items i
-JOIN pedidos   pe ON pe.id = i.pedido_id AND pe.estado = 'entregado'
+JOIN pedidos   pe ON pe.id = i.pedido_id AND pe.estado = 'entregado' AND pe.pagado_en IS NOT NULL
 JOIN productos p  ON p.id  = i.producto_id
 GROUP BY p.id, p.nombre, p.categoria;
 
@@ -48,10 +45,9 @@ WHERE p.activo = 1
 GROUP BY p.id, p.nombre;
 
 -- ---------- Detalle de un pedido (PDF de la cuenta) ----------
--- Úsala así: SELECT * FROM v_detalle_pedido WHERE pedido_id = ?;
 CREATE OR REPLACE VIEW v_detalle_pedido AS
 SELECT pe.id AS pedido_id, m.numero AS mesa, u.nombre AS mesero, pe.estado,
-       pe.num_comensales, pe.creado_en,
+       pe.num_comensales, pe.creado_en, pe.pagado_en, pe.metodo_pago,
        i.id AS item_id, pr.nombre AS producto, i.cantidad, i.precio_unitario,
        (i.cantidad * i.precio_unitario) AS subtotal, i.comensal
 FROM pedidos pe
@@ -63,8 +59,7 @@ JOIN productos pr     ON pr.id = i.producto_id;
 -- ---------- Cuenta dividida, modo "por consumo" ----------
 -- Cada comensal paga lo suyo + su parte de lo compartido (comensal NULL).
 -- El último comensal absorbe los centavos de redondeo para que la suma cuadre con el total.
--- (El modo "partes iguales" es solo ROUND(total / num_comensales, 2) y lo hace el API.)
--- Úsala así: SELECT * FROM v_cuenta_consumo WHERE pedido_id = ?;
+-- El modo "partes iguales" lo calcula la API.
 CREATE OR REPLACE VIEW v_cuenta_consumo AS
 WITH RECURSIVE nums AS (
   SELECT 1 AS n UNION ALL SELECT n + 1 FROM nums WHERE n < 50

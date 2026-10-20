@@ -1,4 +1,4 @@
-// Prueba rápida de la API real. Requiere la API corriendo (npm run dev) y la BD con los datos de ejemplo.
+// Requiere la API corriendo y los datos de ejemplo
 //   npm test                      (usa http://localhost:3000/api)
 //   API_URL=http://IP-EC2/api npm test
 import test from 'node:test';

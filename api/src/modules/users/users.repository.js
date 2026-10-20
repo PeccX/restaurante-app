@@ -1,7 +1,7 @@
 import { query } from '../../config/db.js';
 import { buildWhere, updateById } from '../../utils/sql.js';
 
-// Solo SQL. Nunca devuelve password_hash, salvo findByEmail (lo necesita el login).
+// password_hash solo sale en findByEmail (login)
 const PUBLIC = 'id, nombre, email, rol, activo, creado_en';
 
 export const findById = async (id) => (await query(`SELECT ${PUBLIC} FROM usuarios WHERE id = ?`, [id]))[0];

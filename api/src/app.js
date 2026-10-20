@@ -11,7 +11,7 @@ app.use(helmet());
 app.use(cors({
   origin: env.CORS_ORIGIN.split(',').map((o) => o.trim()),
   allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Content-Disposition'],               // para que el cliente lea el nombre de los PDF/Excel
+  exposedHeaders: ['Content-Disposition'],               // nombre de archivo de PDF/Excel
 }));
 app.use(express.json({ limit: '100kb' }));
 app.use('/api', routes);

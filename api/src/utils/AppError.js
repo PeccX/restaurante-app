@@ -1,4 +1,3 @@
-// Error "esperado" con código HTTP. El errorHandler lo convierte en respuesta JSON.
 export class AppError extends Error {
   constructor(status, message, details) {
     super(message);

@@ -1,5 +1,4 @@
-// Mesas, insumos (con ajustes) y productos con receta. Requiere la API corriendo.
-//   npm test
+// Requiere la API corriendo
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -13,9 +12,17 @@ const call = async (method, path, { token, body } = {}) => {
 };
 const login = async (email, password) => (await call('POST', '/auth/login', { body: { email, password } })).data.token;
 
+// Las mesas desactivadas conservan su número (UNIQUE)
+const crearMesaPrueba = async (token, capacidad = 4) => {
+  for (let i = 0; i < 30; i++) {
+    const r = await call('POST', '/mesas', { token, body: { numero: 200 + Math.floor(Math.random() * 790), capacidad } });
+    if (r.status !== 409) return r;
+  }
+  throw new Error('No se encontró un número de mesa libre para las pruebas');
+};
+
 const sfx = Date.now().toString(36);
 let admin, mesero, mesaId, insumoId, insumo2Id, productoId;
-const numeroMesa = 500 + (Date.now() % 400);
 
 test('preparación: login admin y mesero', async () => {
   admin = await login('admin@sabor.gt', 'Admin123!');
@@ -23,12 +30,12 @@ test('preparación: login admin y mesero', async () => {
   assert.ok(admin && mesero);
 });
 
-// ---------------- MESAS ----------------
+// ---------- MESAS ----------
 test('mesas: listar (mesero puede), crear solo admin', async () => {
   const lista = await call('GET', '/mesas', { token: mesero });
   assert.equal(lista.status, 200);
   assert.ok(lista.data.length >= 6);
-  assert.equal((await call('POST', '/mesas', { token: mesero, body: { numero: numeroMesa } })).status, 403);
+  assert.equal((await call('POST', '/mesas', { token: mesero, body: { numero: 999 } })).status, 403);
   assert.equal((await call('GET', '/mesas')).status, 401);
 });
 test('mesas: validación (número 0, capacidad texto, campo extra)', async () => {
@@ -37,8 +44,9 @@ test('mesas: validación (número 0, capacidad texto, campo extra)', async () =>
   assert.ok(data.details.length >= 3);
 });
 test('mesas: crear, duplicado 409, actualizar, filtrar', async () => {
-  const c = await call('POST', '/mesas', { token: admin, body: { numero: numeroMesa, capacidad: 6 } });
+  const c = await crearMesaPrueba(admin, 6);
   assert.equal(c.status, 201);
+  const numeroMesa = c.data.numero;
   assert.equal(c.data.estado, 'libre');
   mesaId = c.data.id;
   assert.equal((await call('POST', '/mesas', { token: admin, body: { numero: numeroMesa } })).status, 409);
@@ -57,7 +65,7 @@ test('mesas: no se puede eliminar una mesa ocupada; libre sí (queda inactiva)',
   assert.equal((await call('GET', '/mesas/999999', { token: admin })).status, 404);
 });
 
-// ---------------- INSUMOS ----------------
+// ---------- INSUMOS ----------
 test('insumos: validación al crear', async () => {
   const { status, data } = await call('POST', '/insumos', { token: admin, body: { nombre: 'A', unidad: 'kg', stock: -5 } });
   assert.equal(status, 400);
@@ -118,7 +126,7 @@ test('insumos: permisos (mesero lee, no ajusta ni crea) y filtro bajo_minimo', a
   assert.ok(!bajo.data.some((i) => i.id === insumoId));
 });
 
-// ---------------- PRODUCTOS ----------------
+// ---------- PRODUCTOS ----------
 test('productos: validación (precio negativo, receta con insumo repetido y cantidad 0)', async () => {
   const { status, data } = await call('POST', '/productos', { token: admin, body: {
     nombre: 'Pan', precio: -1, receta: [{ insumo_id: insumoId, cantidad: 0 }, { insumo_id: insumoId, cantidad: 5 }] } });
@@ -188,4 +196,19 @@ test('productos: eliminar = desactivar; luego el insumo ya se puede desactivar',
   assert.ok(!act.data.some((p) => p.id === productoId));
   assert.equal((await call('DELETE', `/insumos/${insumoId}`, { token: admin })).status, 204);
   assert.equal((await call('DELETE', `/insumos/${insumo2Id}`, { token: admin })).status, 204);
+});
+
+// ---------- VALIDACIONES ----------
+test('validación: nada en cero ni vacío (precio 0, nombres sin letras, cantidades 0)', async () => {
+  const mal = async (path, body) => assert.equal((await call('POST', path, { token: admin, body })).status, 400, `${path} ${JSON.stringify(body)}`);
+  await mal('/productos', { nombre: `Cero ${sfx}`, precio: 0 });                       // un producto no puede costar 0
+  await mal('/productos', { nombre: '000', precio: 10 });                             // el nombre necesita letras
+  await mal('/productos', { nombre: '   ', precio: 10 });
+  await mal('/productos', { nombre: 0, precio: 0, categoria: 0, receta: 0 });          // todo en cero
+  await mal('/insumos', { nombre: '123', unidad: 'g' });
+  await mal('/insumos', { nombre: 0, unidad: 0, stock: 0, stock_minimo: 0 });
+  await mal('/mesas', { numero: 0, capacidad: 0 });
+  await mal('/users', { nombre: '000', email: 'cero@sabor.gt', password: 'Prueba123' });
+  await mal('/users', { nombre: 0, email: 0, password: 0 });
+  await mal('/productos', {});                                                          // cuerpo vacío
 });

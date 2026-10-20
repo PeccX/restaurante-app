@@ -17,8 +17,12 @@ export const create = async ({ nombre, unidad, stock, stock_minimo }, run = quer
 
 export const update = (id, fields) => updateById('insumos', id, fields);
 
-// Funciones transaccionales: reciben `run` de withTransaction
+// ---------- TRANSACCIONALES (reciben run de withTransaction) ----------
+
 export const lockById = async (id, run) => (await run('SELECT * FROM insumos WHERE id = ? FOR UPDATE', [id]))[0];
+// Siempre en orden de id, para evitar deadlocks
+export const lockByIds = (ids, run) =>
+  run(`SELECT * FROM insumos WHERE id IN (${ids.map(() => '?').join(',')}) ORDER BY id FOR UPDATE`, ids);
 export const setStock = (id, stock, run) => run('UPDATE insumos SET stock = ? WHERE id = ?', [stock, id]);
 export const addMovimiento = (m, run) => run(
   'INSERT INTO movimientos_inventario (insumo_id, tipo, cantidad, stock_resultante, pedido_id, usuario_id, motivo) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -28,9 +32,8 @@ export const addMovimiento = (m, run) => run(
 export const movimientos = (insumoId, limit) => query(
   `SELECT m.id, m.tipo, m.cantidad, m.stock_resultante, m.pedido_id, m.motivo, m.creado_en, u.nombre AS usuario
    FROM movimientos_inventario m JOIN usuarios u ON u.id = m.usuario_id
-   WHERE m.insumo_id = ? ORDER BY m.id DESC LIMIT ${Number(limit)}`, [insumoId]);   // limit ya validado como entero
+   WHERE m.insumo_id = ? ORDER BY m.id DESC LIMIT ${Number(limit)}`, [insumoId]);   // limit ya validado por Zod
 
-// Productos ACTIVOS cuya receta usa este insumo
 export const productosQueLoUsan = (insumoId) => query(
   'SELECT p.nombre FROM recetas r JOIN productos p ON p.id = r.producto_id WHERE r.insumo_id = ? AND p.activo = 1', [insumoId]);
 export const usadoEnRecetas = async (insumoId) =>

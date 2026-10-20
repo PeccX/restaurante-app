@@ -6,7 +6,7 @@ import { validate } from '../../middlewares/validate.js';
 import * as ctrl from './auth.controller.js';
 import { loginBody } from './auth.schema.js';
 
-// Frena fuerza bruta: solo cuenta los intentos FALLIDOS por IP
+// Solo cuenta intentos fallidos, por IP
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, limit: env.LOGIN_MAX_ATTEMPTS, skipSuccessfulRequests: true,
   standardHeaders: true, legacyHeaders: false,

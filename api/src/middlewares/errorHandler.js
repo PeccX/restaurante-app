@@ -1,10 +1,11 @@
 import { AppError } from '../utils/AppError.js';
 
-// Errores de MariaDB/MySQL por número (errno) => respuesta HTTP entendible
+// errno de MariaDB -> respuesta HTTP
 const dbErrors = {
   1062: [409, 'Ya existe un registro con esos datos'],
   1451: [409, 'No se puede eliminar: tiene registros relacionados'],
   1452: [400, 'Referencia a un registro que no existe'],
+  1213: [503, 'El sistema está ocupado, intenta de nuevo'],
   4025: [400, 'Un dato no cumple las restricciones'],
   3819: [400, 'Un dato no cumple las restricciones'],
 };

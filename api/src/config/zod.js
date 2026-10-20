@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Mensajes de validación en español (los mensajes explícitos de cada schema tienen prioridad)
+// Mensajes en español por defecto
 const tipos = { string: 'texto', number: 'número', boolean: 'verdadero/falso', array: 'lista', object: 'objeto' };
 
 z.setErrorMap((issue, ctx) => {

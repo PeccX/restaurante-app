@@ -31,14 +31,13 @@ const assertNoEnUso = async (id) => {
   if (usos.length) throw new AppError(409, `No se puede desactivar: lo usan las recetas de ${usos.map((u) => u.nombre).join(', ')}`);
 };
 
-// "Eliminar" = desactivar, solo si ningún producto activo lo usa
 export const remove = async (id) => {
   await get(id);
   await assertNoEnUso(id);
   await repo.update(id, { activo: 0 });
 };
 
-// Ajuste de existencias: todo o nada, con la fila bloqueada para que dos ajustes simultáneos no se pisen
+// FOR UPDATE: dos ajustes simultáneos no se pisan
 export const ajustar = async (id, { cantidad, motivo }, actor) => {
   await withTransaction(async (run) => {
     const insumo = orNotFound(await repo.lockById(id, run), 'Insumo');

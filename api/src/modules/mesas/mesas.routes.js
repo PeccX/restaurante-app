@@ -6,7 +6,7 @@ import * as ctrl from './mesas.controller.js';
 import { listQuery, createBody, updateBody } from './mesas.schema.js';
 
 const router = Router();
-router.use(authenticate);                                   // leer: cualquier usuario autenticado
+router.use(authenticate);
 
 router.get('/', validate({ query: listQuery }), ctrl.list);
 router.get('/:id', validate({ params: idParams }), ctrl.get);

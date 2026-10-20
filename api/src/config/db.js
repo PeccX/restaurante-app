@@ -4,26 +4,30 @@ import { env } from './env.js';
 export const pool = mysql.createPool({
   host: env.DB_HOST, port: env.DB_PORT, user: env.DB_USER, password: env.DB_PASSWORD, database: env.DB_NAME,
   waitForConnections: true, connectionLimit: 10, charset: 'utf8mb4',
-  decimalNumbers: true,            // DECIMAL llega como número, no como string
+  decimalNumbers: true,            // DECIMAL como número, no string
+  timezone: env.DB_TIMEZONE,
 });
+// Misma zona en la sesión: DATE() y CURRENT_TIMESTAMP en hora local
+pool.pool.on('connection', (conn) => conn.query(`SET time_zone = '${env.DB_TIMEZONE}'`));
 
-// SELECT => filas; INSERT/UPDATE/DELETE => { insertId, affectedRows }. Siempre con parámetros (?), nunca concatenar.
 export const query = async (sql, params = []) => (await pool.execute(sql, params))[0];
 
-// Para operaciones de varios pasos (crear/cancelar pedido): todo o nada.
-// fn recibe run(sql, params), que ejecuta DENTRO de la transacción.
-export const withTransaction = async (fn) => {
-  const conn = await pool.getConnection();
-  const run = async (sql, params = []) => (await conn.execute(sql, params))[0];
-  try {
-    await conn.beginTransaction();
-    const result = await fn(run);
-    await conn.commit();
-    return result;
-  } catch (err) {
-    await conn.rollback();
-    throw err;
-  } finally {
-    conn.release();
+// Reintenta solo en deadlock (1213); fn debe poder repetirse
+const RETRYABLE = new Set([1213]);
+export const withTransaction = async (fn, attempts = 3) => {
+  for (let n = 1; ; n++) {
+    const conn = await pool.getConnection();
+    const run = async (sql, params = []) => (await conn.execute(sql, params))[0];
+    try {
+      await conn.beginTransaction();
+      const result = await fn(run);
+      await conn.commit();
+      return result;
+    } catch (err) {
+      await conn.rollback().catch(() => {});
+      if (!RETRYABLE.has(err.errno) || n >= attempts) throw err;
+    } finally {
+      conn.release();
+    }
   }
 };

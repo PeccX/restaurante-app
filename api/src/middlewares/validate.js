@@ -1,6 +1,6 @@
 import { AppError } from '../utils/AppError.js';
 
-// validate({ params, query, body }) con schemas Zod. Deja los datos limpios en req.valid.{params,query,body}
+// Deja los datos validados en req.valid
 export const validate = (schemas) => (req, _res, next) => {
   const valid = {};
   const details = [];

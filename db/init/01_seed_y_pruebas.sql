@@ -4,8 +4,8 @@
 SET NAMES utf8mb4;
 USE restaurante;
 
--- Usuarios de prueba (hash bcrypt, compatible con bcrypt/bcryptjs de Node)
---   admin@sabor.gt  / Admin123!      mesero@sabor.gt / Mesero123!   (cámbialos antes de desplegar)
+-- Usuarios de prueba
+--   admin@sabor.gt  / Admin123!      mesero@sabor.gt / Mesero123!
 INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES
   ('Administrador', 'admin@sabor.gt',  '$2b$10$6WDv5wht1fmopcBwYjzW8ec/mWjzbWDMe9Z2CarCz3xXsmAREdzlu', 'admin'),
   ('Mesero Demo',   'mesero@sabor.gt', '$2b$10$1RiayJMyXFOrgLfLay929e/.AUiKdv51ABgLbhpnrzgxL12CUHmpi', 'mesero');
@@ -31,7 +31,7 @@ INSERT INTO productos (nombre, categoria, precio) VALUES
   ('Ensalada fresca',        'entrada',  22.00),
   ('Gaseosa',                'bebida',   10.00);
 
--- Recetas por 1 unidad vendida (se buscan por nombre para no depender de los ids)
+-- Recetas por 1 unidad vendida
 INSERT INTO recetas (producto_id, insumo_id, cantidad)
 SELECT p.id, i.id, r.cant
 FROM (
@@ -54,7 +54,7 @@ JOIN insumos   i ON i.nombre = r.ins;
 
 -- ============================================================
 -- PRUEBAS DE RESTRICCIONES: cada intento DEBE fallar. Resultado: OK / FALLO
--- (en HeidiSQL, ejecuta todo el archivo; la última pestaña de resultados trae la tabla)
+--
 -- ============================================================
 DROP PROCEDURE IF EXISTS sp_pruebas_catalogos;
 DELIMITER $$
@@ -107,6 +107,13 @@ BEGIN
   END;
   INSERT INTO resultados_pruebas VALUES ('precio negativo rechazado', IF(fallo_esperado, 'OK', 'FALLO'));
 
+  SET fallo_esperado = 0;
+  BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION SET fallo_esperado = 1;
+    INSERT INTO productos (nombre, precio) VALUES ('Gratis', 0);
+  END;
+  INSERT INTO resultados_pruebas VALUES ('precio 0 rechazado', IF(fallo_esperado, 'OK', 'FALLO'));
+
   SELECT * FROM resultados_pruebas;
 END$$
 DELIMITER ;
@@ -114,10 +121,6 @@ DELIMITER ;
 CALL sp_pruebas_catalogos();
 DROP PROCEDURE sp_pruebas_catalogos;
 
--- ============================================================
--- CONSULTA CLAVE: ¿cuántas porciones de cada producto se pueden preparar
--- con el stock actual de insumos? (el insumo más escaso manda)
--- ============================================================
 SELECT p.nombre AS producto,
        CAST(MIN(FLOOR(i.stock / r.cantidad)) AS UNSIGNED) AS porciones_disponibles
 FROM productos p

@@ -1,7 +1,5 @@
 -- ============================================================
 -- PARTE 1: Catálogos (usuarios, mesas, insumos, productos, recetas)
--- Motor: MariaDB 10.5+ (compatible con MySQL 8). Abrir en HeidiSQL > Archivo > Ejecutar archivo SQL.
--- OJO:   los DROP del inicio borran todo; útil en desarrollo, no en producción.
 -- ============================================================
 
 CREATE DATABASE IF NOT EXISTS restaurante CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -11,7 +9,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS recetas, productos, insumos, mesas, usuarios;
 SET FOREIGN_KEY_CHECKS = 1;
 
--- ---------- USUARIOS (módulo obligatorio: CRUD + login) ----------
+-- ---------- USUARIOS ----------
 CREATE TABLE usuarios (
   id             INT AUTO_INCREMENT PRIMARY KEY,
   nombre         VARCHAR(100) NOT NULL,
@@ -35,7 +33,7 @@ CREATE TABLE mesas (
   CONSTRAINT chk_mesas_estado    CHECK (estado IN ('libre', 'ocupada'))
 ) ENGINE=InnoDB;
 
--- ---------- INSUMOS (inventario real: lo que se gasta con las recetas) ----------
+-- ---------- INSUMOS ----------
 CREATE TABLE insumos (
   id            INT AUTO_INCREMENT PRIMARY KEY,
   nombre        VARCHAR(100)  NOT NULL UNIQUE,
@@ -48,7 +46,7 @@ CREATE TABLE insumos (
   CONSTRAINT chk_insumos_min    CHECK (stock_minimo >= 0)
 ) ENGINE=InnoDB;
 
--- ---------- PRODUCTOS (lo que se vende: platillos y bebidas) ----------
+-- ---------- PRODUCTOS ----------
 CREATE TABLE productos (
   id         INT AUTO_INCREMENT PRIMARY KEY,
   nombre     VARCHAR(100) NOT NULL UNIQUE,
@@ -56,10 +54,10 @@ CREATE TABLE productos (
   precio     DECIMAL(10,2) NOT NULL,
   activo     TINYINT(1)   NOT NULL DEFAULT 1,
   CONSTRAINT chk_productos_cat    CHECK (categoria IN ('platillo', 'bebida', 'entrada', 'postre')),
-  CONSTRAINT chk_productos_precio CHECK (precio >= 0)
+  CONSTRAINT chk_productos_precio CHECK (precio > 0)
 ) ENGINE=InnoDB;
 
--- ---------- RECETAS (cuánto insumo gasta 1 unidad de cada producto) ----------
+-- ---------- RECETAS ----------
 CREATE TABLE recetas (
   producto_id  INT NOT NULL,
   insumo_id    INT NOT NULL,

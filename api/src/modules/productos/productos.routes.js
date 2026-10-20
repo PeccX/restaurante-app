@@ -6,7 +6,7 @@ import * as ctrl from './productos.controller.js';
 import { listQuery, createBody, updateBody } from './productos.schema.js';
 
 const router = Router();
-router.use(authenticate);                                   // el menú lo ve cualquier usuario autenticado
+router.use(authenticate);
 
 router.get('/', validate({ query: listQuery }), ctrl.list);
 router.get('/:id', validate({ params: idParams }), ctrl.get);

@@ -12,4 +12,7 @@ export const list = ({ activo, estado } = {}) => {
 export const create = async ({ numero, capacidad }) =>
   (await query('INSERT INTO mesas (numero, capacidad) VALUES (?, ?)', [numero, capacidad])).insertId;
 
+export const cuentasPendientes = async (id) => (await query(
+  "SELECT COUNT(*) AS n FROM pedidos WHERE mesa_id = ? AND estado <> 'cancelado' AND pagado_en IS NULL", [id]))[0].n;
+
 export const update = (id, fields) => updateById('mesas', id, fields);
