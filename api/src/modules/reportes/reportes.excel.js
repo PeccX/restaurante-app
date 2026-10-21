@@ -1,11 +1,11 @@
 import ExcelJS from 'exceljs';
 import { horaLocal, fmtDia, fmtFechaHora, capitalizar } from '../../utils/formato.js';
 
-const ACENTO = 'FF9A3412';
+const ACENTO = 'FFEA6A12';
 const Q = '"Q" #,##0.00';
-const dia = (iso) => new Date(`${iso}T00:00:00Z`);     // Excel no maneja zonas: fecha "pura"
+const dia = (iso) => new Date(`${iso}T00:00:00Z`);
 
-// columnas: [{ titulo, key, ancho, fmt }]; total: keys a sumar en una fila final con fórmula
+// total: keys que llevan SUM al final
 const hoja = (wb, nombre, columnas, filas, { total = [], vacio = 'Sin datos en este rango' } = {}) => {
   const ws = wb.addWorksheet(nombre, { views: [{ state: 'frozen', ySplit: 1 }] });
   ws.columns = columnas.map((c) => ({ header: c.titulo, key: c.key, width: c.ancho ?? 14, style: c.fmt ? { numFmt: c.fmt } : {} }));
@@ -22,7 +22,7 @@ const hoja = (wb, nombre, columnas, filas, { total = [], vacio = 'Sin datos en e
     const r = ws.addRow({ [columnas[0].key]: 'Total' });
     total.forEach((key) => {
       const col = ws.getColumn(key).letter;
-      // result: el valor ya calculado, para que se vea igual aunque el programa no recalcule
+      // result: por si el programa no recalcula al abrir
       r.getCell(key).value = { formula: `SUM(${col}2:${col}${n})`, result: filas.reduce((s, f) => s + Number(f[key] ?? 0), 0) };
     });
     r.font = { bold: true };
@@ -37,7 +37,7 @@ export const ventasExcel = async (d, usuario) => {
 
   const res = wb.addWorksheet('Resumen');
   res.columns = [{ width: 26 }, { width: 18 }, { width: 14 }];
-  res.addRow(['Sabor Chapín · Reporte de ventas']).font = { bold: true, size: 14, color: { argb: ACENTO } };
+  res.addRow(['Sabor Chapín, reporte de ventas']).font = { bold: true, size: 14, color: { argb: ACENTO } };
   res.addRow([`Del ${fmtDia(d.desde)} al ${fmtDia(d.hasta)}`]);
   res.addRow([`Generado el ${fmtFechaHora(Date.now())} por ${usuario.nombre}`]).font = { italic: true, color: { argb: 'FF57534E' } };
   res.addRow(['Solo cuenta pedidos entregados y pagados, en la fecha del pago.']).font = { italic: true, color: { argb: 'FF57534E' } };

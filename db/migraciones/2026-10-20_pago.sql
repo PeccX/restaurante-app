@@ -1,6 +1,5 @@
 -- ============================================================
 -- Migración para una BD creada antes del pago (ejecutar una vez, como root).
--- En una instalación nueva no hace falta: 02 y 03 ya traen estos cambios.
 -- ============================================================
 USE restaurante;
 SET time_zone = '-06:00';

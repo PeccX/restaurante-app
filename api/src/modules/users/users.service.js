@@ -9,7 +9,7 @@ export const get = async (id) => orNotFound(await repo.findById(id), 'Usuario');
 
 const assertEmailFree = async (email, exceptId) => {
   const found = await repo.findByEmail(email);
-  if (found && found.id !== exceptId) throw new AppError(409, 'El correo ya está registrado');
+  if (found && found.id !== exceptId) throw new AppError(409, 'El correo ya está registrado', [{ campo: 'email', mensaje: 'Ya hay un usuario con este correo' }]);
 };
 
 export const create = async ({ nombre, email, password, rol }) => {

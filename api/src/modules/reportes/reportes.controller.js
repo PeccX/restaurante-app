@@ -14,7 +14,7 @@ export const ventasExcelCtrl = async (req, res) => {
   adjunto(res, XLSX, `${nombreRango(req.valid.query)}.xlsx`).send(Buffer.from(buffer));
 };
 
-// Los datos se consultan antes de escribir: si algo falla, todavía se puede responder con JSON de error
+// Consultar antes de hacer pipe: si falla, todavía se responde con JSON
 export const ventasPdfCtrl = async (req, res) => {
   const doc = ventasPdf(await service.ventas(req.valid.query), req.user);
   adjunto(res, PDF, `${nombreRango(req.valid.query)}.pdf`);

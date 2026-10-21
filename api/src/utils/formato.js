@@ -1,10 +1,9 @@
 import { env } from '../config/env.js';
 
-// Las fechas de la BD son instantes; para mostrarlas se corren a la zona del restaurante
 const [, signo, hh, mm] = env.DB_TIMEZONE.match(/([+-])(\d{2}):(\d{2})/);
 const OFFSET_MS = (signo === '-' ? -1 : 1) * (Number(hh) * 60 + Number(mm)) * 60_000;
 
-// Date cuyos campos UTC son la hora local (sirve para Excel, que no maneja zonas)
+// Excel no maneja zonas: Date con la hora local en los campos UTC
 export const horaLocal = (d) => new Date(new Date(d).getTime() + OFFSET_MS);
 export const hoy = () => horaLocal(Date.now()).toISOString().slice(0, 10);
 

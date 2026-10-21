@@ -8,11 +8,12 @@ const SELECT = `SELECT p.id, p.mesa_id, m.numero AS mesa, p.usuario_id, u.nombre
 
 export const findById = async (id) => (await query(`${SELECT} WHERE p.id = ?`, [id]))[0];
 
-export const list = ({ estado, abiertos, por_cobrar, mesa_id, desde, hasta, limit }) => {
+export const list = ({ estado, abiertos, por_cobrar, sin_pagar, mesa_id, desde, hasta, limit }) => {
   const { sql, params } = buildWhere([
     estado && ['p.estado = ?', estado],
     abiertos && ["p.estado IN ('pendiente', 'en_preparacion')"],
     por_cobrar && ["p.estado = 'entregado' AND p.pagado_en IS NULL"],
+    sin_pagar && ["p.estado <> 'cancelado' AND p.pagado_en IS NULL"],
     mesa_id && ['p.mesa_id = ?', mesa_id],
     desde && ['DATE(p.creado_en) >= ?', desde],
     hasta && ['DATE(p.creado_en) <= ?', hasta],
@@ -21,7 +22,7 @@ export const list = ({ estado, abiertos, por_cobrar, mesa_id, desde, hasta, limi
 };
 
 export const getItems = (pedidoId) => query(
-  `SELECT i.id, i.producto_id, pr.nombre AS producto, i.cantidad, i.precio_unitario,
+  `SELECT i.id, i.producto_id, pr.nombre AS producto, pr.categoria, i.cantidad, i.precio_unitario,
           (i.cantidad * i.precio_unitario) AS subtotal, i.comensal
    FROM pedido_items i JOIN productos pr ON pr.id = i.producto_id WHERE i.pedido_id = ? ORDER BY i.id`, [pedidoId]);
 

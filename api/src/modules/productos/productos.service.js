@@ -11,7 +11,7 @@ export const get = async (id) => {
 
 const assertNombreFree = async (nombre, exceptId) => {
   const found = await repo.findByNombre(nombre);
-  if (found && found.id !== exceptId) throw new AppError(409, `Ya existe un producto llamado "${nombre}"`);
+  if (found && found.id !== exceptId) throw new AppError(409, `Ya existe un producto llamado "${nombre}"`, [{ campo: 'nombre', mensaje: 'Ya hay un producto con este nombre' }]);
 };
 
 const assertRecetaValida = async (receta) => {

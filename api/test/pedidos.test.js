@@ -188,6 +188,8 @@ test('filtros del listado y fechas inválidas', async () => {
   const c = await call('GET', `/pedidos?mesa_id=${mesaId}&estado=cancelado`, { token: admin });
   assert.ok(c.data.some((p) => p.id === pedidoId));
   assert.ok(c.data.every((p) => p.estado === 'cancelado' && p.mesa_id === mesaId));
+  const sinPagar = (await call('GET', `/pedidos?sin_pagar=true&mesa_id=${mesaId}`, { token: mesero })).data;
+  assert.ok(sinPagar.every((p) => p.estado !== 'cancelado' && !p.pagado), 'sin_pagar excluye cancelados y pagados');
   assert.equal((await call('GET', '/pedidos?desde=ayer', { token: admin })).status, 400);
   assert.equal((await call('GET', '/pedidos?desde=2026-02-31', { token: admin })).status, 400, 'fecha que no existe');
   assert.equal((await call('GET', '/pedidos?desde=2026-10-20&hasta=2026-10-01', { token: admin })).status, 400);

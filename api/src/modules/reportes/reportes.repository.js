@@ -1,6 +1,6 @@
 import { query } from '../../config/db.js';
 
-// Venta = entregado y pagado, en la fecha del pago. El rango se compara sin DATE() para usar el índice.
+// Sin DATE() en pagado_en para que use el índice
 const PAGADOS = "pe.estado = 'entregado' AND pe.pagado_en >= ? AND pe.pagado_en < ? + INTERVAL 1 DAY";
 
 export const ventasPorDia = (desde, hasta) => query(

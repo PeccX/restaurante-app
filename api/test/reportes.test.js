@@ -11,7 +11,6 @@ const call = async (method, path, { token, body } = {}) => {
   });
   return { status: res.status, data: res.status === 204 ? null : await res.json().catch(() => null) };
 };
-// Para PDF/Excel: devuelve el archivo como Buffer y los encabezados
 const descargar = async (path, token) => {
   const res = await fetch(BASE + path, { headers: { Authorization: `Bearer ${token}` } });
   return { status: res.status, tipo: res.headers.get('content-type'), disposicion: res.headers.get('content-disposition'), buffer: Buffer.from(await res.arrayBuffer()) };

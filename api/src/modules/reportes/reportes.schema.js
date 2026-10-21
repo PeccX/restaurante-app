@@ -5,7 +5,7 @@ const DIA = 86_400_000;
 export const MAX_DIAS = 366;
 const dias = (desde, hasta) => (Date.parse(hasta) - Date.parse(desde)) / DIA + 1;
 
-// Sin fechas: últimos 30 días hasta hoy
+// Sin fechas: últimos 30 días
 export const rangoQuery = (hoy) => z.object({
   desde: fecha.optional(),
   hasta: fecha.optional(),

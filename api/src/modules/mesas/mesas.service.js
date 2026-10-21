@@ -6,7 +6,7 @@ export const get = async (id) => orNotFound(await repo.findById(id), 'Mesa');
 
 const assertNumeroFree = async (numero, exceptId) => {
   const found = await repo.findByNumero(numero);
-  if (found && found.id !== exceptId) throw new AppError(409, `Ya existe la mesa ${numero}`);
+  if (found && found.id !== exceptId) throw new AppError(409, `Ya existe la mesa ${numero}`, [{ campo: 'numero', mensaje: 'Ese número ya está en uso' }]);
 };
 
 export const create = async (data) => {

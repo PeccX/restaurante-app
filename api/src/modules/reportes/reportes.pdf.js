@@ -1,7 +1,7 @@
 import PDFDocument from 'pdfkit';
 import { fmtDia, fmtFechaHora, quetzales, capitalizar } from '../../utils/formato.js';
 
-const C = { acento: '#9a3412', texto: '#1c1917', suave: '#57534e', linea: '#d6d3d1', zebra: '#f5f5f4' };
+const C = { acento: '#EA6A12', texto: '#07143B', suave: '#6B6E75', linea: '#EAE8E7', zebra: '#FFF5EE' };
 const M = 50;                                     // margen
 
 const nuevoDoc = (titulo) => new PDFDocument({ size: 'LETTER', margin: M, bufferPages: true, info: { Title: titulo, Author: 'Sabor Chapín' } });
@@ -10,7 +10,7 @@ const ancho = (doc) => doc.page.width - 2 * M;
 const encabezado = (doc, titulo, subtitulo) => {
   doc.rect(0, 0, doc.page.width, 6).fill(C.acento);
   doc.fillColor(C.acento).font('Helvetica-Bold').fontSize(20).text('Sabor Chapín', M, M);
-  doc.fillColor(C.suave).font('Helvetica').fontSize(9).text('Restaurante · Quetzaltenango, Guatemala');
+  doc.fillColor(C.suave).font('Helvetica').fontSize(9).text('Quetzaltenango, Guatemala');
   doc.moveDown(1.2).fillColor(C.texto).font('Helvetica-Bold').fontSize(15).text(titulo);
   if (subtitulo) doc.fillColor(C.suave).font('Helvetica').fontSize(10).text(subtitulo);
   doc.moveDown(0.8);
@@ -24,7 +24,7 @@ const subtitulo = (doc, texto) => {
 
 const espacio = (doc, alto) => { if (doc.y + alto > doc.page.height - M - 20) doc.addPage(); };
 
-// columnas: [{ titulo, ancho (proporción), align }]; filas: arreglos de textos ya formateados
+// ancho de columna = proporción, no puntos
 const tabla = (doc, columnas, filas, { total } = {}) => {
   const W = ancho(doc), suma = columnas.reduce((s, c) => s + c.ancho, 0);
   const cols = columnas.map((c) => ({ ...c, w: (c.ancho / suma) * W }));
@@ -54,7 +54,6 @@ const tabla = (doc, columnas, filas, { total } = {}) => {
   doc.moveDown(0.4);
 };
 
-// Bloque de datos en dos columnas: [[etiqueta, valor], ...]
 const datos = (doc, pares) => {
   const W = ancho(doc) / 2, y0 = doc.y;
   pares.forEach(([k, v], i) => {
@@ -94,7 +93,7 @@ export const cuentaPdf = ({ pedido, cuenta }, usuario) => {
   datos(doc, [
     ['Mesero', pedido.mesero], ['Comensales', String(pedido.num_comensales)],
     ['Fecha', fmtFechaHora(pedido.creado_en)], ['Estado', capitalizar(pedido.estado)],
-    ['Pago', pedido.pagado_en ? `${capitalizar(pedido.metodo_pago)} · ${fmtFechaHora(pedido.pagado_en)}` : 'Pendiente de pago'],
+    ['Pago', pedido.pagado_en ? `${capitalizar(pedido.metodo_pago)}, ${fmtFechaHora(pedido.pagado_en)}` : 'Pendiente de pago'],
     ['División', cuenta.modo === 'iguales' ? 'Partes iguales' : 'Por consumo'],
   ]);
   if (pedido.notas) doc.font('Helvetica-Oblique').fontSize(9).fillColor(C.suave).text(`Notas: ${pedido.notas}`, M).moveDown(0.4);
@@ -125,7 +124,7 @@ export const cuentaPdf = ({ pedido, cuenta }, usuario) => {
 
 export const ventasPdf = (d, usuario) => {
   const doc = nuevoDoc(`Reporte de ventas ${d.desde} a ${d.hasta}`);
-  encabezado(doc, 'Reporte de ventas', `Del ${fmtDia(d.desde)} al ${fmtDia(d.hasta)} · solo pedidos entregados y pagados`);
+  encabezado(doc, 'Reporte de ventas', `Del ${fmtDia(d.desde)} al ${fmtDia(d.hasta)}. Solo pedidos entregados y pagados.`);
   tarjetas(doc, [['Total vendido', quetzales(d.resumen.total_ventas)], ['Pedidos', String(d.resumen.num_pedidos)],
     ['Ticket promedio', quetzales(d.resumen.ticket_promedio)], ['Comensales', String(d.resumen.comensales)]]);
 

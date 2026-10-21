@@ -1,0 +1,40 @@
+@import 'tailwindcss';
+@import '@fontsource/poppins/400.css';
+@import '@fontsource/poppins/500.css';
+@import '@fontsource/poppins/600.css';
+@import '@fontsource-variable/playfair-display/wght.css';
+
+/* Colores y fuentes de Aprycot (Figma) */
+@theme {
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Playfair Display Variable', Georgia, serif;
+  --color-primario-700: #C4560B;
+  --color-primario-600: #EA6A12;
+  --color-primario-400: #EF9455;
+  --color-primario-100: #FDE8D9;
+  --color-primario-50: #FFF5EE;
+  --color-fondo: #FAF6F3;
+  --color-tinta: #07143B;
+  --color-suave: #6B6E75;          /* el #959895 del template casi no se lee sobre crema */
+  --color-linea: #E3E1E1;
+  --color-exito-600: #2E8B57;
+  --color-exito-50: #E6F4EC;
+  --color-aviso-700: #9A6510;
+  --color-aviso-50: #FDF3DC;
+  --color-peligro-600: #D64545;
+  --color-peligro-50: #FDECEC;
+}
+
+@utility titulo { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.01em; }
+@utility cifras { font-variant-numeric: tabular-nums; }
+@utility tarjeta { background: #fff; border-radius: 1.25rem; box-shadow: 0 10px 30px -12px rgb(234 106 18 / 0.14); }
+
+@layer base {
+  html { -webkit-font-smoothing: antialiased; }
+  body { @apply bg-fondo text-tinta font-sans; }
+  :focus-visible { @apply outline-2 outline-offset-2 outline-primario-600; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
