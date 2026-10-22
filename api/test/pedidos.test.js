@@ -188,6 +188,9 @@ test('filtros del listado y fechas inválidas', async () => {
   const c = await call('GET', `/pedidos?mesa_id=${mesaId}&estado=cancelado`, { token: admin });
   assert.ok(c.data.some((p) => p.id === pedidoId));
   assert.ok(c.data.every((p) => p.estado === 'cancelado' && p.mesa_id === mesaId));
+  const cocinaVe = (await call('GET', `/pedidos?abiertos=true&con_items=true&mesa_id=${mesaId}`, { token: cocina })).data;
+  assert.ok(cocinaVe.every((p) => Array.isArray(p.items) && p.items.every((i) => i.pedido_id === p.id)), 'con_items trae los ítems de cada pedido');
+  assert.equal((await call('GET', '/pedidos?abiertos=true', { token: cocina })).data[0]?.items, undefined, 'sin con_items no se traen');
   const sinPagar = (await call('GET', `/pedidos?sin_pagar=true&mesa_id=${mesaId}`, { token: mesero })).data;
   assert.ok(sinPagar.every((p) => p.estado !== 'cancelado' && !p.pagado), 'sin_pagar excluye cancelados y pagados');
   assert.equal((await call('GET', '/pedidos?desde=ayer', { token: admin })).status, 400);

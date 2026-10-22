@@ -21,6 +21,10 @@ export const list = ({ estado, abiertos, por_cobrar, sin_pagar, mesa_id, desde, 
   return query(`${SELECT} ${sql} ORDER BY p.id DESC LIMIT ${Number(limit)}`, params);   // limit ya validado por Zod
 };
 
+export const getItemsDe = (ids) => !ids.length ? [] : query(
+  `SELECT i.id, i.pedido_id, i.producto_id, pr.nombre AS producto, pr.categoria, i.cantidad, i.comensal
+   FROM pedido_items i JOIN productos pr ON pr.id = i.producto_id WHERE i.pedido_id IN (${ids.map(() => '?').join(',')}) ORDER BY i.id`, ids);
+
 export const getItems = (pedidoId) => query(
   `SELECT i.id, i.producto_id, pr.nombre AS producto, pr.categoria, i.cantidad, i.precio_unitario,
           (i.cantidad * i.precio_unitario) AS subtotal, i.comensal

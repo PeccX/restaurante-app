@@ -10,6 +10,7 @@ import Mesas from './pages/mesas/Mesas';
 import MesaDetalle from './pages/mesas/MesaDetalle';
 import PedidoEditor from './pages/pedidos/PedidoEditor';
 import PedidoDetalle from './pages/pedidos/PedidoDetalle';
+import Cocina from './pages/cocina/Cocina';
 import NoEncontrada from './pages/errores/NoEncontrada';
 import SinConexion from './pages/errores/SinConexion';
 import { AtraparErrores, LanzarError } from './pages/errores/ErrorInesperado';
@@ -43,7 +44,7 @@ function Rutas() {
         <Route path="/mesas/:id/nuevo" element={<Protegida roles={MESA}><PedidoEditor /></Protegida>} />
         <Route path="/pedidos/:pedidoId" element={<PedidoDetalle />} />
         <Route path="/pedidos/:pedidoId/editar" element={<Protegida roles={MESA}><PedidoEditor /></Protegida>} />
-        <Route path="/cocina" element={<Protegida roles={['admin', 'cocina']}><Pendiente titulo="Cocina" /></Protegida>} />
+        <Route path="/cocina" element={<Protegida roles={['admin', 'cocina']}><Cocina /></Protegida>} />
         <Route path="/inventario" element={<Protegida roles={['admin', 'cocina']}><Pendiente titulo="Inventario" /></Protegida>} />
         <Route path="/productos" element={<Protegida roles={['admin']}><Pendiente titulo="Productos" /></Protegida>} />
         <Route path="/reportes" element={<Protegida roles={['admin']}><Pendiente titulo="Reportes" /></Protegida>} />

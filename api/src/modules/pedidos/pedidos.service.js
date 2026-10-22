@@ -7,7 +7,13 @@ import { dividirIguales } from './pedidos.cuenta.js';
 // pendiente -> en_preparacion -> entregado -> pagado. Cancelar solo antes de entregar.
 const TRANSICIONES = { pendiente: ['en_preparacion', 'cancelado'], en_preparacion: ['entregado', 'cancelado'], entregado: [], cancelado: [] };
 
-export const list = (filters) => repo.list(filters);
+// con_items: una sola consulta para los ítems de todos los pedidos (pantalla de cocina)
+export const list = async ({ con_items, ...filtros }) => {
+  const pedidos = await repo.list(filtros);
+  if (!con_items) return pedidos;
+  const items = await repo.getItemsDe(pedidos.map((p) => p.id));
+  return pedidos.map((p) => ({ ...p, items: items.filter((i) => i.pedido_id === p.id) }));
+};
 
 export const get = async (id) => {
   const pedido = orNotFound(await repo.findById(id), 'Pedido');

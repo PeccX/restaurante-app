@@ -36,6 +36,7 @@ export const listQuery = z.object({
   abiertos: bool.optional(),                                // pendiente + en_preparacion (cocina)
   por_cobrar: bool.optional(),                              // entregados sin pagar
   sin_pagar: bool.optional(),                               // no cancelados y sin pagar
+  con_items: bool.optional(),
   mesa_id: z.coerce.number().int().positive().optional(),
   desde: fecha.optional(), hasta: fecha.optional(),
   limit: z.coerce.number().int().min(1).max(200).default(100),
