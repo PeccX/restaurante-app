@@ -25,6 +25,9 @@ const pedir = async (method, path, body) => {
   } catch {
     throw new ApiError(0, 'No hay conexión con el servidor. Revisa que la API esté encendida.');
   }
+  
+  if ([502, 503, 504].includes(res.status) && !res.headers.get('content-type')?.includes('json'))
+    throw new ApiError(0, 'No hay conexión con el servidor. Revisa que la API esté encendida.');
   if (res.status === 401 && t) alExpirar();
   return res;
 };
