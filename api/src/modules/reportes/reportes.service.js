@@ -1,6 +1,7 @@
 import * as repo from './reportes.repository.js';
 import * as pedidos from '../pedidos/pedidos.service.js';
 import { listaDeDias } from './reportes.schema.js';
+import { armarHojas } from './reportes.cuenta.js';
 
 const centavos = (filas, campo) => filas.reduce((s, f) => s + Math.round(f[campo] * 100), 0) / 100;
 
@@ -27,7 +28,8 @@ export const ventas = async ({ desde, hasta }) => {
   };
 };
 
-export const cuenta = async (id, { modo }) => {
-  const cuenta = await pedidos.cuenta(id, { modo });
-  return { pedido: await pedidos.get(id), cuenta };
+export const cuenta = async (id, { tipo }) => {
+  const porConsumo = (await pedidos.cuenta(id, { modo: 'consumo' })).cuentas;   // 404 y 409 (cancelado) salen de aquí
+  const pedido = await pedidos.get(id);
+  return { pedido, tipo, hojas: armarHojas(pedido, pedido.num_comensales > 1 ? tipo : 'unica', porConsumo) };
 };

@@ -24,7 +24,6 @@ const subtitulo = (doc, texto) => {
 
 const espacio = (doc, alto) => { if (doc.y + alto > doc.page.height - M - 20) doc.addPage(); };
 
-// ancho de columna = proporción, no puntos
 const tabla = (doc, columnas, filas, { total } = {}) => {
   const W = ancho(doc), suma = columnas.reduce((s, c) => s + c.ancho, 0);
   const cols = columnas.map((c) => ({ ...c, w: (c.ancho / suma) * W }));
@@ -35,7 +34,8 @@ const tabla = (doc, columnas, filas, { total } = {}) => {
     if (fondo) doc.rect(M, y, W, ALTO).fill(fondo);
     let x = M;
     doc.font(negrita ? 'Helvetica-Bold' : 'Helvetica').fontSize(9).fillColor(color);
-    cols.forEach((c, i) => {
+    if (valores.length === 1 && cols.length > 1) doc.text(String(valores[0]), x + 4, y + 5, { width: W - 8, height: 11, ellipsis: true });
+    else cols.forEach((c, i) => {
       doc.text(String(valores[i] ?? ''), x + 4, y + 5, { width: c.w - 8, height: 11, align: c.align ?? 'left', ellipsis: true });
       x += c.w;
     });
@@ -43,9 +43,11 @@ const tabla = (doc, columnas, filas, { total } = {}) => {
   };
   const cabecera = () => fila(cols.map((c) => c.titulo), { fondo: C.acento, negrita: true, color: '#ffffff' });
   cabecera();
-  filas.forEach((f, i) => {
+  let z = 0;
+  filas.forEach((f) => {
     if (doc.y + ALTO > doc.page.height - M - 20) { doc.addPage(); cabecera(); }
-    fila(f, { fondo: i % 2 ? C.zebra : null });
+    if (f.grupo) { fila([f.grupo], { fondo: C.linea, negrita: true }); z = 0; return; }
+    fila(f.valores ?? f, { fondo: z++ % 2 ? C.zebra : null, color: f.tenue ? C.suave : C.texto });
   });
   if (total) {
     doc.moveTo(M, doc.y).lineTo(M + W, doc.y).lineWidth(0.8).strokeColor(C.texto).stroke();
@@ -87,37 +89,63 @@ const pie = (doc, texto) => {
   }
 };
 
-export const cuentaPdf = ({ pedido, cuenta }, usuario) => {
+const TIPOS = { unica: 'Una sola cuenta', iguales: 'Partes iguales', consumo: 'Por comensal' };
+const COLS_CONSUMO = [{ titulo: 'Producto', ancho: 5 }, { titulo: 'Cant.', ancho: 1, align: 'right' },
+  { titulo: 'P. unitario', ancho: 2, align: 'right' }, { titulo: 'Subtotal', ancho: 2, align: 'right' }];
+const fila = (f) => [f.producto, f.cantidad, quetzales(f.precio), quetzales(f.subtotal)];
+
+const resumen = (doc, pares) => {
+  const W = 280, x = M + ancho(doc) - W;
+  espacio(doc, pares.length * 20 + 20);
+  doc.moveDown(0.3);
+  pares.forEach(([k, v], i) => {
+    const ultimo = i === pares.length - 1, y = doc.y;
+    if (ultimo && pares.length > 1) doc.moveTo(x, y - 3).lineTo(x + W, y - 3).lineWidth(0.8).strokeColor(C.texto).stroke();
+    doc.font(ultimo ? 'Helvetica-Bold' : 'Helvetica').fontSize(ultimo ? 12 : 10).fillColor(ultimo ? C.texto : C.suave)
+      .text(k, x, y + 2, { width: W - 90 })
+      .text(quetzales(v), x + W - 90, y + 2, { width: 90, align: 'right' });
+    doc.y = y + (ultimo ? 22 : 18);
+  });
+  doc.x = M;
+};
+
+const recuadro = (doc, titulo, texto) => {
+  const W = ancho(doc), alto = doc.font('Helvetica').fontSize(9).heightOfString(texto, { width: W - 32 }) + 38;
+  espacio(doc, alto + 16);
+  doc.moveDown(0.8);
+  const y = doc.y;
+  doc.roundedRect(M, y, W, alto, 8).fillAndStroke(C.zebra, '#F5C7A5');
+  doc.font('Helvetica-Bold').fontSize(9).fillColor(C.acento).text(titulo, M + 16, y + 12);
+  doc.font('Helvetica').fontSize(9).fillColor(C.texto).text(texto, M + 16, y + 26, { width: W - 32 });
+  doc.x = M; doc.y = y + alto;
+};
+
+export const cuentaPdf = ({ pedido, hojas, tipo }, usuario) => {
   const doc = nuevoDoc(`Cuenta pedido ${pedido.id}`);
-  encabezado(doc, `Cuenta del pedido #${pedido.id}`, `Mesa ${pedido.mesa}`);
-  datos(doc, [
-    ['Mesero', pedido.mesero], ['Comensales', String(pedido.num_comensales)],
-    ['Fecha', fmtFechaHora(pedido.creado_en)], ['Estado', capitalizar(pedido.estado)],
-    ['Pago', pedido.pagado_en ? `${capitalizar(pedido.metodo_pago)}, ${fmtFechaHora(pedido.pagado_en)}` : 'Pendiente de pago'],
-    ['División', cuenta.modo === 'iguales' ? 'Partes iguales' : 'Por consumo'],
-  ]);
-  if (pedido.notas) doc.font('Helvetica-Oblique').fontSize(9).fillColor(C.suave).text(`Notas: ${pedido.notas}`, M).moveDown(0.4);
-
-  subtitulo(doc, 'Consumo');
-  const items = [...pedido.items].sort((a, b) => (a.comensal ?? 99) - (b.comensal ?? 99));
-  tabla(doc, [{ titulo: 'Producto', ancho: 4 }, { titulo: 'Comensal', ancho: 2 }, { titulo: 'Cant.', ancho: 1, align: 'right' },
-    { titulo: 'P. unitario', ancho: 2, align: 'right' }, { titulo: 'Subtotal', ancho: 2, align: 'right' }],
-  items.map((i) => [i.producto, i.comensal ? `Comensal ${i.comensal}` : 'Compartido', i.cantidad, quetzales(i.precio_unitario), quetzales(i.subtotal)]),
-  { total: ['Total', '', '', '', quetzales(pedido.total)] });
-
-  subtitulo(doc, cuenta.modo === 'iguales' ? 'División en partes iguales' : 'División por consumo');
-  if (cuenta.modo === 'iguales') {
-    tabla(doc, [{ titulo: 'Comensal', ancho: 3 }, { titulo: 'Total a pagar', ancho: 2, align: 'right' }],
-      cuenta.cuentas.map((c) => [`Comensal ${c.comensal}`, quetzales(c.total_a_pagar)]),
-      { total: ['Total', quetzales(pedido.total)] });
-  } else {
-    tabla(doc, [{ titulo: 'Comensal', ancho: 3 }, { titulo: 'Lo suyo', ancho: 2, align: 'right' },
-      { titulo: 'Parte compartida', ancho: 2, align: 'right' }, { titulo: 'Total a pagar', ancho: 2, align: 'right' }],
-    cuenta.cuentas.map((c) => [`Comensal ${c.comensal}`, quetzales(c.propio), quetzales(c.compartido), quetzales(c.total_a_pagar)]),
-    { total: ['Total', '', '', quetzales(pedido.total)] });
-    if (cuenta.items_compartidos.length)
-      doc.font('Helvetica').fontSize(8).fillColor(C.suave).text('Lo compartido se reparte en partes iguales; el último comensal absorbe los centavos del redondeo.', M);
-  }
+  hojas.forEach((h, i) => {
+    if (i) doc.addPage();
+    encabezado(doc, `Cuenta del pedido #${pedido.id}`, `Mesa ${pedido.mesa}${h.subtitulo ? `, ${h.subtitulo}` : ''}`);
+    datos(doc, [
+      ['Mesero', pedido.mesero], ['Comensales', String(pedido.num_comensales)],
+      ['Fecha', fmtFechaHora(pedido.creado_en)], ['Estado', capitalizar(pedido.estado)],
+      ['Pago', pedido.pagado_en ? `${capitalizar(pedido.metodo_pago)}, ${fmtFechaHora(pedido.pagado_en)}` : 'Pendiente de pago'],
+      ['Cuenta', TIPOS[tipo]],
+    ]);
+    subtitulo(doc, 'Consumo');
+    tabla(doc, COLS_CONSUMO, [
+      ...h.filas.map(fila),
+      ...(h.compartidos ? [{ grupo: `Compartido entre ${h.compartidos.n}` }, ...h.compartidos.filas.map((f) => ({ valores: fila(f), tenue: true }))] : []),
+    ]);
+    resumen(doc, h.resumen);
+    if (h.ajuste) {
+      const c = quetzales(Math.abs(h.ajuste) / 100);
+      recuadro(doc, 'Información', h.quien
+        ? `La parte del ${h.quien} es de ${quetzales(h.conAjuste)}: ${h.ajuste > 0 ? `incluye ${c} de ajuste` : `se restó ${c}`} por redondeo para que la suma de las partes dé el total exacto.`
+        : h.ajuste > 0
+          ? `Incluye ${c} de ajuste por redondeo para que la suma de las cuentas dé el total exacto.`
+          : `Se restó ${c} por redondeo para que la suma de las cuentas dé el total exacto.`);
+    }
+  });
   pie(doc, `Generado el ${fmtFechaHora(Date.now())} por ${usuario.nombre}`);
   return doc;
 };

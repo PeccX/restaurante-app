@@ -14,7 +14,7 @@ export const rangoQuery = (hoy) => z.object({
   .refine((r) => r.desde <= r.hasta, { message: '"desde" no puede ser posterior a "hasta"', path: ['desde'] })
   .refine((r) => dias(r.desde, r.hasta) <= MAX_DIAS, { message: `El rango no puede pasar de ${MAX_DIAS} días`, path: ['hasta'] });
 
-export const cuentaQuery = z.object({ modo: z.enum(['consumo', 'iguales']).default('consumo') }).strict();
+export const cuentaQuery = z.object({ tipo: z.enum(['unica', 'iguales', 'consumo']).default('unica') }).strict();
 
 export const listaDeDias = (desde, hasta) =>
   Array.from({ length: dias(desde, hasta) }, (_, i) => new Date(Date.parse(desde) + i * DIA).toISOString().slice(0, 10));

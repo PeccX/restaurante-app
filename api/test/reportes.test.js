@@ -67,7 +67,7 @@ test('validación de fechas y parámetros => 400 con detalle', async () => {
   await mal('?desde=2026-10-20&hasta=2026-10-01');        // al revés
   await mal('?desde=2025-01-01&hasta=2026-10-20');        // más de 366 días
   await mal('?desde=2026-10-01&otro=1');                  // parámetro desconocido
-  assert.equal((await call('GET', `/reportes/cuenta/${pedidoId}/pdf?modo=mitad`, { token: admin })).status, 400);
+  assert.equal((await call('GET', `/reportes/cuenta/${pedidoId}/pdf?tipo=mitad`, { token: admin })).status, 400);
   assert.equal((await call('GET', '/reportes/cuenta/abc/pdf', { token: admin })).status, 400);
   assert.equal((await call('GET', '/reportes/cuenta/999999/pdf', { token: admin })).status, 404);
 });
@@ -121,13 +121,17 @@ test('PDF de ventas: archivo válido con nombre por rango', async () => {
 });
 
 // ---------- CUENTA ----------
-test('PDF de la cuenta: por consumo y en partes iguales', async () => {
-  for (const modo of ['consumo', 'iguales']) {
-    const r = await descargar(`/reportes/cuenta/${pedidoId}/pdf?modo=${modo}`, admin);
-    assert.equal(r.status, 200, modo);
+const paginas = (b) => (b.toString('latin1').match(/\/Type \/Page\b/g) ?? []).length;
+
+test('PDF de la cuenta: una sola, partes iguales y una hoja por comensal', async () => {
+  for (const [tipo, hojas] of [['unica', 1], ['iguales', 1], ['consumo', 3]]) {
+    const r = await descargar(`/reportes/cuenta/${pedidoId}/pdf?tipo=${tipo}`, admin);
+    assert.equal(r.status, 200, tipo);
     assert.match(r.disposicion, new RegExp(`cuenta_pedido_${pedidoId}\\.pdf`));
-    assert.ok(esPdf(r.buffer), modo);
+    assert.ok(esPdf(r.buffer), tipo);
+    assert.equal(paginas(r.buffer), hojas, `${tipo}: ${hojas} página(s)`);
   }
+  assert.equal(paginas((await descargar(`/reportes/cuenta/${pedidoId}/pdf`, admin)).buffer), 1, 'sin tipo = una sola cuenta');
 });
 
 // ---------- VENTA REAL ----------

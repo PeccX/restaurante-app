@@ -8,7 +8,7 @@ import { useDatos } from '../../lib/useDatos';
 import { useAuth } from '../../auth/AuthContext';
 import { useToast } from '../../components/Toast';
 import { Plato } from '../../components/Plato';
-import { Aviso, Boton, Cargando, Insignia, Modal, cx } from '../../components/ui';
+import { Aviso, Boton, Cargando, Insignia, Modal, Selector, cx } from '../../components/ui';
 
 const PASOS = [['pendiente', 'Pendiente'], ['en_preparacion', 'En preparación'], ['entregado', 'Entregado'], ['pagado', 'Pagado']];
 const ICONO_PAGO = { efectivo: Banknote, tarjeta: CreditCard, transferencia: Landmark };
@@ -19,6 +19,7 @@ export default function PedidoDetalle() {
   const avisar = useToast();
   const navigate = useNavigate();
   const [modo, setModo] = useState('consumo');
+  const [tipo, setTipo] = useState('unica');
   const [dialogo, setDialogo] = useState(null);              // 'cancelar' | 'cobrar'
   const [ocupado, setOcupado] = useState(null);
   const { datos, error, recargar } = useDatos(async () => {
@@ -39,7 +40,7 @@ export default function PedidoDetalle() {
     catch (err) { avisar(err.message, 'error'); }
     finally { setOcupado(null); }
   };
-  const pdf = () => accion('pdf', () => descargar(`/reportes/cuenta/${p.id}/pdf?modo=${modo}`), 'Se descargó la cuenta.');
+  const pdf = () => accion('pdf', () => descargar(`/reportes/cuenta/${p.id}/pdf?tipo=${p.num_comensales > 1 ? tipo : 'unica'}`), 'Se descargó la cuenta.');
 
   const grupos = [...Array.from({ length: p.num_comensales }, (_, k) => k + 1), null]
     .map((c) => ({ c, items: p.items.filter((i) => i.comensal === c) })).filter((g) => g.items.length);
@@ -118,7 +119,7 @@ export default function PedidoDetalle() {
               ))}
             </div>
             <p className="mt-3 text-xs text-suave">
-              {modo === 'consumo' ? 'Cada quien paga lo suyo más su parte de lo compartido.' : 'El total se divide entre todos; los centavos que sobran van al último.'}
+              {modo === 'consumo' ? 'Cada quien paga lo suyo más su parte de lo compartido.' : 'El total se divide entre todos; el último comensal ajusta los centavos del redondeo.'}
             </p>
             <ul className="mt-4 flex flex-col divide-y divide-linea">
               {cuenta.cuentas.map((c) => (
@@ -132,9 +133,21 @@ export default function PedidoDetalle() {
               ))}
             </ul>
             {user.rol !== 'cocina' && (
-              <Boton variante="secundario" className="mt-4 w-full" cargando={ocupado === 'pdf'} onClick={pdf}>
-                <FileDown className="size-4" aria-hidden="true" />Descargar cuenta en PDF
-              </Boton>
+              <div className="mt-5 border-t border-linea pt-5">
+                {p.num_comensales > 1 && (
+                  <>
+                    <label htmlFor="tipo-cuenta" className="mb-1.5 block text-sm font-medium">Cuenta para imprimir</label>
+                    <Selector id="tipo-cuenta" value={tipo} onChange={(e) => setTipo(e.target.value)}>
+                      <option value="unica">Una sola cuenta</option>
+                      <option value="iguales">Partes iguales (una hoja)</option>
+                      <option value="consumo">Una cuenta por comensal</option>
+                    </Selector>
+                  </>
+                )}
+                <Boton variante="secundario" className="mt-3 w-full" cargando={ocupado === 'pdf'} onClick={pdf}>
+                  <FileDown className="size-4" aria-hidden="true" />Descargar PDF
+                </Boton>
+              </div>
             )}
           </section>
         )}
