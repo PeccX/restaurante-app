@@ -60,7 +60,7 @@ export default function AppShell() {
       </aside>
 
       <div className="min-w-0 flex flex-col">
-        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-linea">
+        <header className="sticky top-0 z-30 bg-white border-b border-linea">
           <div className="flex h-16 lg:h-20 items-center justify-between gap-4 px-4 sm:px-8">
             <div className="flex items-center gap-3 lg:hidden">
               <button onClick={() => setMenu((m) => !m)} aria-expanded={menu} aria-controls="menu-movil" aria-label={menu ? 'Cerrar menú' : 'Abrir menú'}

@@ -219,7 +219,7 @@ function TarjetaProducto({ p, cantidad, alAgregar, para }) {
   const activa = cantidad > 0;
   return (
     <div className={cx('relative flex h-full flex-col rounded-[24px] px-5 pb-5 pt-16 transition-colors',
-      activa ? 'bg-primario-600/70 text-white backdrop-blur' : 'bg-white/80 backdrop-blur shadow-[0_10px_30px_-12px_rgb(234_106_18/0.14)]', agotado && 'opacity-60')}>
+      activa ? 'bg-primario-400 text-white' : 'bg-white shadow-[0_10px_30px_-12px_rgb(234_106_18/0.14)]', agotado && 'opacity-60')}>
       <Plato categoria={p.categoria} tam="lg" className="absolute -top-14 left-1/2 -translate-x-1/2" />
       {activa && <span className="absolute right-4 top-4 rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-primario-700 cifras">×{cantidad}</span>}
       <p className="font-semibold leading-snug">{p.nombre}</p>

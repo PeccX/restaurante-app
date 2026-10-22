@@ -97,7 +97,7 @@ export default function Productos() {
         <ul className="grid grid-cols-2 gap-x-5 gap-y-16 pt-16 md:grid-cols-3 xl:grid-cols-4">
           {productos.map((p) => (
             <li key={p.id}>
-              <article className={cx('relative flex h-full flex-col rounded-[24px] bg-white/80 px-5 pb-4 pt-16 shadow-[0_10px_30px_-12px_rgb(234_106_18/0.14)] backdrop-blur', !p.activo && 'opacity-70')}>
+              <article className={cx('relative flex h-full flex-col rounded-[24px] bg-white px-5 pb-4 pt-16 shadow-[0_10px_30px_-12px_rgb(234_106_18/0.14)]', !p.activo && 'opacity-70')}>
                 <Plato categoria={p.categoria} tam="lg" className={cx('absolute -top-14 left-1/2 -translate-x-1/2', !p.activo && 'grayscale')} />
                 {!p.activo && <span className="absolute left-4 top-4"><Insignia>Inactivo</Insignia></span>}
                 {!p.con_ventas && (
