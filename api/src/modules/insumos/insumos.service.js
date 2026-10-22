@@ -6,7 +6,13 @@ import * as repo from './insumos.repository.js';
 export const list = (filters) => repo.list(filters);
 export const get = async (id) => orNotFound(await repo.findById(id), 'Insumo');
 
+const assertNombreFree = async (nombre, exceptId) => {
+  const found = await repo.findByNombre(nombre);
+  if (found && found.id !== exceptId) throw new AppError(409, `Ya existe un insumo llamado "${nombre}"`, [{ campo: 'nombre', mensaje: 'Ya hay un insumo con este nombre' }]);
+};
+
 export const create = async (data, actor) => {
+  await assertNombreFree(data.nombre);
   const id = await withTransaction(async (run) => {
     const id = await repo.create(data, run);
     if (data.stock > 0)
@@ -18,6 +24,7 @@ export const create = async (data, actor) => {
 
 export const update = async (id, data) => {
   const insumo = await get(id);
+  if (data.nombre) await assertNombreFree(data.nombre, id);
   if (data.unidad && data.unidad !== insumo.unidad && (await repo.usadoEnRecetas(id)))
     throw new AppError(409, 'No se puede cambiar la unidad: el insumo ya está en recetas');
   if (data.activo === false) await assertNoEnUso(id);

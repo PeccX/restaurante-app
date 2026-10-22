@@ -5,3 +5,4 @@ export const get = async (req, res) => res.json(await service.get(req.valid.para
 export const create = async (req, res) => res.status(201).json(await service.create(req.valid.body));
 export const update = async (req, res) => res.json(await service.update(req.valid.params.id, req.valid.body));
 export const remove = async (req, res) => { await service.remove(req.valid.params.id); res.status(204).end(); };
+export const eliminar = async (req, res) => { await service.eliminar(req.valid.params.id); res.status(204).end(); };

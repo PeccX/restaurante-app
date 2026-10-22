@@ -33,6 +33,9 @@
   html { -webkit-font-smoothing: antialiased; }
   body { @apply bg-fondo text-tinta font-sans; }
   :focus-visible { @apply outline-2 outline-offset-2 outline-primario-600; }
+  /* sin flechas en los campos numéricos: se montan sobre la unidad y el teclado del celular ya es numérico */
+  input[type='number'] { -moz-appearance: textfield; }
+  input[type='number']::-webkit-inner-spin-button, input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

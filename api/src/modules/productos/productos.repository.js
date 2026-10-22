@@ -2,7 +2,8 @@ import { query } from '../../config/db.js';
 import { buildWhere, updateById } from '../../utils/sql.js';
 
 // porciones = NULL si el producto no tiene receta
-const SELECT = `SELECT p.*, v.porciones FROM productos p LEFT JOIN v_porciones_disponibles v ON v.producto_id = p.id`;
+const SELECT = `SELECT p.*, v.porciones, EXISTS (SELECT 1 FROM pedido_items i WHERE i.producto_id = p.id) AS con_ventas
+  FROM productos p LEFT JOIN v_porciones_disponibles v ON v.producto_id = p.id`;
 
 export const findById = async (id) => (await query(`${SELECT} WHERE p.id = ?`, [id]))[0];
 export const findByNombre = async (nombre) => (await query('SELECT id FROM productos WHERE nombre = ?', [nombre]))[0];
@@ -34,3 +35,5 @@ export const replaceReceta = async (productoId, receta, run) => {
   for (const { insumo_id, cantidad } of receta)
     await run('INSERT INTO recetas (producto_id, insumo_id, cantidad) VALUES (?, ?, ?)', [productoId, insumo_id, cantidad]);
 };
+// La receta se borra sola (ON DELETE CASCADE)
+export const borrar = (id, run) => run('DELETE FROM productos WHERE id = ?', [id]);

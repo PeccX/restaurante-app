@@ -189,6 +189,21 @@ test('insumos: no se puede desactivar ni cambiar de unidad un insumo usado por u
   assert.match(d.data.error, /Pan dulce/);
   assert.equal((await call('PUT', `/insumos/${insumoId}`, { token: admin, body: { unidad: 'ml' } })).status, 409);
 });
+test('insumos: nombre repetido => 409 con el campo', async () => {
+  const r = await call('POST', '/insumos', { token: admin, body: { nombre: `Harina ${sfx}`, unidad: 'g' } });
+  assert.equal(r.status, 409);
+  assert.equal(r.data.details[0].campo, 'nombre');
+});
+
+test('productos: sin ventas se pueden borrar de verdad (con su receta)', async () => {
+  const p = await call('POST', '/productos', { token: admin, body: { nombre: `Temporal ${sfx}`, precio: 9, receta: [{ insumo_id: insumoId, cantidad: 10 }] } });
+  assert.equal(p.data.con_ventas, 0);
+  assert.equal((await call('DELETE', `/productos/${p.data.id}/definitivo`, { token: mesero })).status, 403);
+  assert.equal((await call('DELETE', `/productos/${p.data.id}/definitivo`, { token: admin })).status, 204);
+  assert.equal((await call('GET', `/productos/${p.data.id}`, { token: admin })).status, 404);
+  assert.equal((await call('DELETE', '/productos/999999/definitivo', { token: admin })).status, 404);
+});
+
 test('productos: eliminar = desactivar; luego el insumo ya se puede desactivar', async () => {
   assert.equal((await call('DELETE', `/productos/${productoId}`, { token: admin })).status, 204);
   assert.equal((await call('GET', `/productos/${productoId}`, { token: admin })).data.activo, 0);

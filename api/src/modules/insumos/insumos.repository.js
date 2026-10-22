@@ -12,6 +12,8 @@ export const list = ({ activo, bajo_minimo, q } = {}) => {
   return query(`SELECT * FROM insumos ${sql} ORDER BY nombre`, params);
 };
 
+export const findByNombre = async (nombre) => (await query('SELECT id FROM insumos WHERE nombre = ?', [nombre]))[0];
+
 export const create = async ({ nombre, unidad, stock, stock_minimo }, run = query) =>
   (await run('INSERT INTO insumos (nombre, unidad, stock, stock_minimo) VALUES (?, ?, ?, ?)', [nombre, unidad, stock, stock_minimo])).insertId;
 

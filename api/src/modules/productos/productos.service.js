@@ -47,3 +47,10 @@ export const remove = async (id) => {
   await get(id);
   await withTransaction((run) => repo.update(id, { activo: 0 }, run));
 };
+
+// Borrado definitivo solo si nunca se vendió; si alguien vende justo en medio, la FK de pedido_items lo frena igual
+export const eliminar = async (id) => {
+  const producto = await get(id);
+  if (producto.con_ventas) throw new AppError(409, 'Tiene ventas registradas; solo se puede desactivar');
+  await withTransaction((run) => repo.borrar(id, run));
+};

@@ -45,7 +45,7 @@ export const erroresDelServidor = (err, setError, campos) => {
   return err.details?.length && !sueltos.length ? null : [err.message, ...sueltos].join('. ');
 };
 
-export const nombreTexto = z.string().trim().min(2).max(100).regex(/\p{L}/u, 'Debe contener al menos una letra');
+export const nombreTexto = z.string().trim().min(1, 'Escribe el nombre').min(2).max(100).regex(/\p{L}/u, 'Debe contener al menos una letra');
 export const email = z.string().trim().toLowerCase().min(1, 'Escribe el correo').email().max(150);
 export const password = z.string().min(8).max(72)
   .regex(/[A-Za-z]/, 'Debe incluir al menos una letra').regex(/\d/, 'Debe incluir al menos un número');

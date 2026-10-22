@@ -224,6 +224,13 @@ test('entregar NO libera la mesa; al pagar sí. No se paga dos veces ni se cance
   await call('DELETE', `/mesas/${mesa2}`, { token: admin });
 });
 
+test('un producto con ventas no se puede borrar de verdad, solo desactivar', async () => {
+  assert.equal((await call('GET', `/productos/${burger}`, { token: admin })).data.con_ventas, 1);
+  const r = await call('DELETE', `/productos/${burger}/definitivo`, { token: admin });
+  assert.equal(r.status, 409);
+  assert.match(r.data.error, /solo se puede desactivar/);
+});
+
 // ---------- LIMPIEZA ----------
 test('limpieza: cancelar lo que quedó abierto y desactivar los datos de prueba', async () => {
   for (const id of creados) {
