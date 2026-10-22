@@ -8,9 +8,10 @@ import { useDatos } from '../../lib/useDatos';
 import { useAuth } from '../../auth/AuthContext';
 import { useToast } from '../../components/Toast';
 import { Plato } from '../../components/Plato';
-import { Aviso, Boton, Cargando, Insignia, Modal, Selector, cx } from '../../components/ui';
+import { Aviso, Boton, Cargando, Insignia, Modal, cx } from '../../components/ui';
 
 const PASOS = [['pendiente', 'Pendiente'], ['en_preparacion', 'En preparación'], ['entregado', 'Entregado'], ['pagado', 'Pagado']];
+const TIPOS = [['unica', 'Una sola'], ['iguales', 'Iguales'], ['consumo', 'Por comensal']];
 const ICONO_PAGO = { efectivo: Banknote, tarjeta: CreditCard, transferencia: Landmark };
 
 export default function PedidoDetalle() {
@@ -18,15 +19,16 @@ export default function PedidoDetalle() {
   const { user } = useAuth();
   const avisar = useToast();
   const navigate = useNavigate();
-  const [modo, setModo] = useState('consumo');
   const [tipo, setTipo] = useState('unica');
   const [dialogo, setDialogo] = useState(null);              // 'cancelar' | 'cobrar'
   const [ocupado, setOcupado] = useState(null);
   const { datos, error, recargar } = useDatos(async () => {
     const pedido = await api.get(`/pedidos/${pedidoId}`);
-    const cuenta = pedido.estado === 'cancelado' ? null : await api.get(`/pedidos/${pedidoId}/cuenta?modo=${modo}`);
-    return { pedido, cuenta };
-  }, [pedidoId, modo], { cada: 15000 });
+    if (pedido.estado === 'cancelado') return { pedido, cuenta: null };
+    // las dos divisiones en la misma carga: cambiar de opción no espera otra consulta
+    const [consumo, iguales] = await Promise.all(['consumo', 'iguales'].map((m) => api.get(`/pedidos/${pedidoId}/cuenta?modo=${m}`)));
+    return { pedido, cuenta: { consumo: consumo.cuentas, iguales: iguales.cuentas } };
+  }, [pedidoId], { cada: 15000 });
 
   if (!datos) return error ? <Aviso>{error.status === 404 ? 'Ese pedido no existe.' : error.message}</Aviso> : <Cargando />;
   const { pedido: p, cuenta } = datos;
@@ -111,43 +113,20 @@ export default function PedidoDetalle() {
 
         {cuenta && (
           <section className="tarjeta p-6" aria-labelledby="t-cuenta">
-            <h2 id="t-cuenta" className="titulo text-[23px]">Cuenta dividida</h2>
-            <div role="group" aria-label="Forma de dividir" className="mt-4 inline-flex rounded-full border border-linea p-1">
-              {[['consumo', 'Por consumo'], ['iguales', 'Partes iguales']].map(([k, t]) => (
-                <button key={k} aria-pressed={modo === k} onClick={() => setModo(k)}
-                  className={cx('rounded-full px-4 h-8 text-sm font-medium', modo === k ? 'bg-primario-600 text-white' : 'text-suave hover:text-primario-700')}>{t}</button>
-              ))}
-            </div>
-            <p className="mt-3 text-xs text-suave">
-              {modo === 'consumo' ? 'Cada quien paga lo suyo más su parte de lo compartido.' : 'El total se divide entre todos; el último comensal ajusta los centavos del redondeo.'}
-            </p>
-            <ul className="mt-4 flex flex-col divide-y divide-linea">
-              {cuenta.cuentas.map((c) => (
-                <li key={c.comensal} className="flex items-center justify-between py-3">
-                  <div>
-                    <p className="text-sm font-medium">Comensal {c.comensal}</p>
-                    {modo === 'consumo' && <p className="text-xs text-suave cifras">{quetzales(c.propio)} + {quetzales(c.compartido)} compartido</p>}
-                  </div>
-                  <span className="font-semibold cifras">{quetzales(c.total_a_pagar)}</span>
-                </li>
-              ))}
-            </ul>
-            {user.rol !== 'cocina' && (
-              <div className="mt-5 border-t border-linea pt-5">
-                {p.num_comensales > 1 && (
-                  <>
-                    <label htmlFor="tipo-cuenta" className="mb-1.5 block text-sm font-medium">Cuenta para imprimir</label>
-                    <Selector id="tipo-cuenta" value={tipo} onChange={(e) => setTipo(e.target.value)}>
-                      <option value="unica">Una sola cuenta</option>
-                      <option value="iguales">Partes iguales (una hoja)</option>
-                      <option value="consumo">Una cuenta por comensal</option>
-                    </Selector>
-                  </>
-                )}
-                <Boton variante="secundario" className="mt-3 w-full" cargando={ocupado === 'pdf'} onClick={pdf}>
-                  <FileDown className="size-4" aria-hidden="true" />Descargar PDF
-                </Boton>
+            <h2 id="t-cuenta" className="titulo text-[23px]">Cuenta</h2>
+            {p.num_comensales > 1 && (
+              <div role="radiogroup" aria-label="Tipo de cuenta" className="mt-4 flex gap-1 rounded-full border border-linea p-1">
+                {TIPOS.map(([k, t]) => (
+                  <button key={k} role="radio" aria-checked={tipo === k} onClick={() => setTipo(k)}
+                    className={cx('flex-auto whitespace-nowrap rounded-full h-8 px-3 text-[13px] font-medium', tipo === k ? 'bg-primario-600 text-white' : 'text-suave hover:text-primario-700')}>{t}</button>
+                ))}
               </div>
+            )}
+            <VistaCuenta tipo={p.num_comensales > 1 ? tipo : 'unica'} cuenta={cuenta} total={p.total} n={p.num_comensales} />
+            {user.rol !== 'cocina' && (
+              <Boton variante="secundario" className="mt-5 w-full" cargando={ocupado === 'pdf'} onClick={pdf}>
+                <FileDown className="size-4" aria-hidden="true" />Descargar PDF
+              </Boton>
             )}
           </section>
         )}
@@ -157,6 +136,44 @@ export default function PedidoDetalle() {
         alConfirmar={(motivo) => accion('cancelar', () => api.patch(`/pedidos/${p.id}/estado`, { estado: 'cancelado', ...(motivo && { motivo }) }), 'Pedido cancelado. Los insumos regresaron al inventario.')} />
       <Cobrar abierto={dialogo === 'cobrar'} total={p.total} cargando={ocupado === 'cobrar'} alCerrar={() => setDialogo(null)}
         alConfirmar={(metodo_pago) => accion('cobrar', () => api.post(`/pedidos/${p.id}/pago`, { metodo_pago }), `Cobrado ${quetzales(p.total)}.`)} />
+    </>
+  );
+}
+
+// Lo que se ve aquí es lo mismo que imprime el PDF del tipo elegido
+function VistaCuenta({ tipo, cuenta, total, n }) {
+  const texto = {
+    unica: 'Una sola cuenta para toda la mesa.',
+    iguales: `El total se divide entre ${n}; el último comensal ajusta los centavos del redondeo.`,
+    consumo: 'Cada quien paga lo suyo más su parte de lo compartido. Imprime una hoja por comensal.',
+  }[tipo];
+  const detalle = (c) => {
+    if (!c.total_a_pagar) return 'Sin consumo';
+    if (!c.compartido) return 'Solo lo suyo';
+    if (!c.propio) return 'Solo su parte de lo compartido';
+    return `${quetzales(c.propio)} suyo + ${quetzales(c.compartido)} compartido`;
+  };
+  const lista = tipo === 'iguales' ? cuenta.iguales : cuenta.consumo;
+  return (
+    <>
+      <p className="mt-3 text-xs text-suave">{texto}</p>
+      {tipo !== 'unica' && (
+        <ul className="mt-3 flex flex-col divide-y divide-linea">
+          {lista.map((c) => (
+            <li key={c.comensal} className={cx('flex items-center justify-between py-3', !c.total_a_pagar && 'text-suave')}>
+              <div>
+                <p className="text-sm font-medium">Comensal {c.comensal}</p>
+                {tipo === 'consumo' && <p className="text-xs text-suave cifras">{detalle(c)}</p>}
+              </div>
+              <span className="font-semibold cifras">{quetzales(c.total_a_pagar)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className={cx('flex items-baseline justify-between', tipo === 'unica' ? 'mt-4' : 'mt-1 border-t border-linea pt-3')}>
+        <span className="text-sm text-suave">Total</span>
+        <span className="titulo text-2xl cifras">{quetzales(total)}</span>
+      </div>
     </>
   );
 }
