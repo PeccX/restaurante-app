@@ -5,11 +5,11 @@ import { Cargando } from './components/ui';
 import AppShell from './layout/AppShell';
 import Login from './pages/Login';
 import Usuarios from './pages/usuarios/Usuarios';
-import Pendiente from './pages/Pendiente';
 import Mesas from './pages/mesas/Mesas';
 import MesaDetalle from './pages/mesas/MesaDetalle';
 import AdministrarMesas from './pages/mesas/AdministrarMesas';
 import Inventario from './pages/inventario/Inventario';
+import Reportes from './pages/reportes/Reportes';
 import PedidoEditor from './pages/pedidos/PedidoEditor';
 import PedidoDetalle from './pages/pedidos/PedidoDetalle';
 import Cocina from './pages/cocina/Cocina';
@@ -51,7 +51,7 @@ function Rutas() {
         <Route path="/cocina" element={<Protegida roles={['admin', 'cocina']}><Cocina /></Protegida>} />
         <Route path="/inventario" element={<Protegida roles={['admin', 'cocina']}><Inventario /></Protegida>} />
         <Route path="/productos" element={<Protegida roles={['admin']}><Productos /></Protegida>} />
-        <Route path="/reportes" element={<Protegida roles={['admin']}><Pendiente titulo="Reportes" /></Protegida>} />
+        <Route path="/reportes" element={<Protegida roles={['admin']}><Reportes /></Protegida>} />
         <Route path="/usuarios" element={<Protegida roles={['admin']}><Usuarios /></Protegida>} />
       </Route>
       {import.meta.env.DEV && <Route path="/prueba-error" element={<LanzarError />} />}

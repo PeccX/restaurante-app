@@ -152,7 +152,7 @@ export const cuentaPdf = ({ pedido, hojas, tipo }, usuario) => {
 
 export const ventasPdf = (d, usuario) => {
   const doc = nuevoDoc(`Reporte de ventas ${d.desde} a ${d.hasta}`);
-  encabezado(doc, 'Reporte de ventas', `Del ${fmtDia(d.desde)} al ${fmtDia(d.hasta)}. Solo pedidos entregados y pagados.`);
+  encabezado(doc, 'Reporte de ventas', `Del ${fmtDia(d.desde)} al ${fmtDia(d.hasta)}.`);
   tarjetas(doc, [['Total vendido', quetzales(d.resumen.total_ventas)], ['Pedidos', String(d.resumen.num_pedidos)],
     ['Ticket promedio', quetzales(d.resumen.ticket_promedio)], ['Comensales', String(d.resumen.comensales)]]);
 

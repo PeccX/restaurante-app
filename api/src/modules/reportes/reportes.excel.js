@@ -40,7 +40,6 @@ export const ventasExcel = async (d, usuario) => {
   res.addRow(['Sabor Chapín, reporte de ventas']).font = { bold: true, size: 14, color: { argb: ACENTO } };
   res.addRow([`Del ${fmtDia(d.desde)} al ${fmtDia(d.hasta)}`]);
   res.addRow([`Generado el ${fmtFechaHora(Date.now())} por ${usuario.nombre}`]).font = { italic: true, color: { argb: 'FF57534E' } };
-  res.addRow(['Solo cuenta pedidos entregados y pagados, en la fecha del pago.']).font = { italic: true, color: { argb: 'FF57534E' } };
   res.addRow([]);
   [['Total vendido', d.resumen.total_ventas, Q], ['Pedidos', d.resumen.num_pedidos], ['Comensales', d.resumen.comensales],
     ['Ticket promedio', d.resumen.ticket_promedio, Q]].forEach(([k, v, fmt]) => {
