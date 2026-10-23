@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { Plus, Users } from 'lucide-react';
 import { api } from '../../lib/api';
 import { quetzales } from '../../lib/formato';
 import { useDatos } from '../../lib/useDatos';
-import { Aviso, Cargando, Encabezado, Vacio, cx } from '../../components/ui';
+import { useAuth } from '../../auth/AuthContext';
+import { Aviso, Boton, Cargando, Encabezado, Vacio, cx } from '../../components/ui';
 
 const FILTROS = [['todas', 'Todas'], ['libre', 'Libres'], ['ocupada', 'Ocupadas']];
 
@@ -18,6 +19,8 @@ const agrupar = (pedidos) => pedidos.reduce((m, p) => {
 
 export default function Mesas() {
   const [filtro, setFiltro] = useState('todas');
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const { datos, error } = useDatos(async () => {
     const [mesas, pedidos] = await Promise.all([api.get('/mesas?activo=true'), api.get('/pedidos?sin_pagar=true&limit=200')]);
     return { mesas, cuentas: agrupar(pedidos) };
@@ -34,7 +37,9 @@ export default function Mesas() {
 
   return (
     <>
-      <Encabezado titulo="Mesas" descripcion="Toca una mesa libre para tomar su pedido, o una ocupada para ver lo que lleva." />
+      <Encabezado titulo="Mesas" descripcion="Toca una mesa libre para tomar su pedido, o una ocupada para ver lo que lleva.">
+        {user.rol === 'admin' && <Boton variante="secundario" onClick={() => navigate('/mesas/administrar')}>Administrar mesas</Boton>}
+      </Encabezado>
       <div role="group" aria-label="Filtrar mesas" className="mb-8 flex flex-wrap gap-3">
         {FILTROS.map(([v, t]) => (
           <button key={v} aria-pressed={filtro === v} onClick={() => setFiltro(v)}

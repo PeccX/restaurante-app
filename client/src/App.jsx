@@ -8,6 +8,7 @@ import Usuarios from './pages/usuarios/Usuarios';
 import Pendiente from './pages/Pendiente';
 import Mesas from './pages/mesas/Mesas';
 import MesaDetalle from './pages/mesas/MesaDetalle';
+import AdministrarMesas from './pages/mesas/AdministrarMesas';
 import PedidoEditor from './pages/pedidos/PedidoEditor';
 import PedidoDetalle from './pages/pedidos/PedidoDetalle';
 import Cocina from './pages/cocina/Cocina';
@@ -41,6 +42,7 @@ function Rutas() {
       <Route path="/login" element={<Login />} />
       <Route element={<Protegida><AppShell /></Protegida>}>
         <Route path="/mesas" element={<Protegida roles={MESA}><Mesas /></Protegida>} />
+        <Route path="/mesas/administrar" element={<Protegida roles={['admin']}><AdministrarMesas /></Protegida>} />
         <Route path="/mesas/:id" element={<Protegida roles={MESA}><MesaDetalle /></Protegida>} />
         <Route path="/mesas/:id/nuevo" element={<Protegida roles={MESA}><PedidoEditor /></Protegida>} />
         <Route path="/pedidos/:pedidoId" element={<PedidoDetalle />} />
