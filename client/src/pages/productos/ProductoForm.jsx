@@ -4,6 +4,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { z } from 'zod';
 import { api } from '../../lib/api';
 import { erroresDelServidor, nombreTexto, numero, zodResolver } from '../../lib/validacion';
+import { EJEMPLO, SUFIJO, UNIDADES, insumoSchema } from '../../lib/insumos';
 import { CATEGORIAS } from '../../components/Plato';
 import { Aviso, Boton, Campo, Entrada, Selector, cx } from '../../components/ui';
 
@@ -21,12 +22,6 @@ const schema = z.object({
 
 const vacio = { insumo_id: '', cantidad: '' };
 
-const UNIDADES = { g: 'Gramos (g)', ml: 'Mililitros (ml)', unidad: 'Unidades' };
-const SUFIJO = { g: 'g', ml: 'ml', unidad: 'u' };
-const EJEMPLO = { g: 'Ej. 5 kg = 5000 g', ml: 'Ej. 2 litros = 2000 ml', unidad: 'Ej. 30 tortillas = 30' };
-// Mismas reglas que insumos.schema.js; vacío cuenta como 0
-const cantidadInsumo = z.preprocess((v) => (v === '' || v == null ? 0 : Number(v)), z.number({ invalid_type_error: 'Debe ser número' }).min(0, 'No puede ser negativo').max(10_000_000));
-const insumoSchema = z.object({ nombre: nombreTexto, unidad: z.enum(['g', 'ml', 'unidad']), stock: cantidadInsumo, stock_minimo: cantidadInsumo });
 
 // producto = null para crear; si es para editar, ya trae su receta
 export default function ProductoForm({ producto, insumos: iniciales, alGuardar, alCancelar, alCrearInsumo }) {

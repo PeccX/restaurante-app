@@ -9,6 +9,7 @@ import Pendiente from './pages/Pendiente';
 import Mesas from './pages/mesas/Mesas';
 import MesaDetalle from './pages/mesas/MesaDetalle';
 import AdministrarMesas from './pages/mesas/AdministrarMesas';
+import Inventario from './pages/inventario/Inventario';
 import PedidoEditor from './pages/pedidos/PedidoEditor';
 import PedidoDetalle from './pages/pedidos/PedidoDetalle';
 import Cocina from './pages/cocina/Cocina';
@@ -48,7 +49,7 @@ function Rutas() {
         <Route path="/pedidos/:pedidoId" element={<PedidoDetalle />} />
         <Route path="/pedidos/:pedidoId/editar" element={<Protegida roles={MESA}><PedidoEditor /></Protegida>} />
         <Route path="/cocina" element={<Protegida roles={['admin', 'cocina']}><Cocina /></Protegida>} />
-        <Route path="/inventario" element={<Protegida roles={['admin', 'cocina']}><Pendiente titulo="Inventario" /></Protegida>} />
+        <Route path="/inventario" element={<Protegida roles={['admin', 'cocina']}><Inventario /></Protegida>} />
         <Route path="/productos" element={<Protegida roles={['admin']}><Productos /></Protegida>} />
         <Route path="/reportes" element={<Protegida roles={['admin']}><Pendiente titulo="Reportes" /></Protegida>} />
         <Route path="/usuarios" element={<Protegida roles={['admin']}><Usuarios /></Protegida>} />
